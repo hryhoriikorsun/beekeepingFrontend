@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ProductPurchase } from '@/components/product-purchase';
-import { fetchProduct, fetchProducts } from '@/lib/api/server';
+import { fetchProduct, fetchProductsSafe } from '@/lib/api/server';
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -10,7 +10,9 @@ interface Props {
 /// Pre-rendered at build time and revalidated: the catalogue is the only
 /// free traffic channel this shop has, so its pages must be static and fast.
 export async function generateStaticParams() {
-  const products = await fetchProducts();
+  // An empty list is not a failure: pages are then generated on first request
+  // and cached from there. A flaky API must not cost a deploy.
+  const products = await fetchProductsSafe();
   return products.map(({ slug }) => ({ slug }));
 }
 

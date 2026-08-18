@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { logout } from '@/lib/auth/actions';
 import { useAuthStore } from '@/lib/auth/store';
 import { useCartStore } from '@/lib/cart/store';
 
@@ -38,6 +39,13 @@ export function SiteNav() {
             {user.email}
             {user.role !== 'CUSTOMER' && ` · ${ROLE_LABEL[user.role] ?? user.role}`}
           </span>
+          <button
+            type="button"
+            onClick={() => void logout()}
+            className="rounded px-2 py-1 text-stone-500 hover:bg-amber-100"
+          >
+            Вийти
+          </button>
         </>
       ) : (
         <Link

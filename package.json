@@ -8,7 +8,8 @@
     "start": "next start -p 3001",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "api:types": "openapi-typescript http://localhost:3000/docs-json -o lib/api/schema.d.ts"
+    "api:types": "openapi-typescript http://localhost:3000/docs-json -o lib/api/schema.d.ts",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.4",
@@ -19,6 +20,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

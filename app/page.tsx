@@ -1,9 +1,9 @@
 import Link from 'next/link';
-import { fetchProducts } from '@/lib/api/server';
+import { fetchProductsSafe } from '@/lib/api/server';
 import { formatMoney } from '@/lib/format';
 
 export default async function CataloguePage() {
-  const products = await fetchProducts();
+  const products = await fetchProductsSafe();
 
   return (
     <>
@@ -16,7 +16,7 @@ export default async function CataloguePage() {
       </section>
 
       {products.length === 0 ? (
-        <p className="text-stone-600">Наразі товарів немає. Завітайте пізніше.</p>
+        <p className="text-stone-600">Наразі товарів немає. Завітайте трохи пізніше.</p>
       ) : (
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {products.map((product) => (
