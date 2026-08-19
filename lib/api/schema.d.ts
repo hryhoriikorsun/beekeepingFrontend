@@ -124,6 +124,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/products/by-id/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Товар з усіма порогами обох ролей (адмін) */
+        get: operations["ProductsController_byId"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/products/{slug}": {
         parameters: {
             query?: never;
@@ -141,7 +158,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/products/{id}/tiers": {
+    "/products/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -150,12 +167,48 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Додати/оновити рівень ціни (адмін) */
-        post: operations["ProductsController_upsertTier"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Редагувати товар (адмін) */
+        patch: operations["ProductsController_update"];
+        trace?: never;
+    };
+    "/products/{id}/tiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Пороги знижок за ролями (адмін) */
+        get: operations["ProductsController_listTiers"];
+        put?: never;
+        /** Додати або оновити поріг знижки (адмін) */
+        post: operations["ProductsController_addTier"];
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/products/{id}/tiers/{tierId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Прибрати поріг знижки (адмін) */
+        delete: operations["ProductsController_removeTier"];
+        options?: never;
+        head?: never;
+        /** Редагувати поріг знижки (адмін) */
+        patch: operations["ProductsController_updateTier"];
         trace?: never;
     };
     "/orders": {
@@ -472,6 +525,19 @@ export interface components {
             /** @example 20 */
             minQty: number;
         };
+        PriceTierViewDto: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            role: "ADMIN" | "CUSTOMER" | "DEALER";
+            /**
+             * @description Кількість, з якої діє ця ціна
+             * @example 20
+             */
+            minQty: number;
+            /** @example 100.00 */
+            price: string;
+        };
         ProductViewDto: {
             /** Format: uuid */
             id: string;
@@ -507,6 +573,8 @@ export interface components {
              * @example 20
              */
             nextTierAtQty: number | null;
+            /** @description Уся драбина знижок для ролі покупця, за зростанням кількості */
+            tiers: components["schemas"]["PriceTierViewDto"][];
         };
         CreateProductDto: {
             /** @example Мед липовий */
@@ -515,10 +583,10 @@ export interface components {
             slug: string;
             description?: string;
             /**
-             * @default л
+             * @description За умовчанням «л»
              * @example л
              */
-            unit: string;
+            unit?: string;
             /**
              * @description Роздрібна ціна за одиницю, грн
              * @example 200
@@ -526,8 +594,29 @@ export interface components {
             basePrice: number;
             /** @example 100 */
             stock?: number;
-            /** @default true */
-            isActive: boolean;
+            /** @description За умовчанням true */
+            isActive?: boolean;
+        };
+        UpdateProductDto: {
+            /** @example Мед липовий */
+            title?: string;
+            /** @example med-lypovyi */
+            slug?: string;
+            description?: string;
+            /**
+             * @description За умовчанням «л»
+             * @example л
+             */
+            unit?: string;
+            /**
+             * @description Роздрібна ціна за одиницю, грн
+             * @example 200
+             */
+            basePrice?: number;
+            /** @example 100 */
+            stock?: number;
+            /** @description За умовчанням true */
+            isActive?: boolean;
         };
         CreatePriceTierDto: {
             /**
@@ -545,6 +634,18 @@ export interface components {
              * @example 100
              */
             price: number;
+        };
+        UpdatePriceTierDto: {
+            /**
+             * @description Мінімальна кількість для цієї ціни
+             * @example 20
+             */
+            minQty?: number;
+            /**
+             * @description Ціна за одиницю, грн
+             * @example 100
+             */
+            price?: number;
         };
         OrderItemDto: {
             /** Format: uuid */
@@ -613,6 +714,84 @@ export interface components {
              * @enum {string}
              */
             status: "CREATED" | "PENDING_PAYMENT" | "PAID" | "SHIPPED" | "DONE" | "CANCELLED";
+        };
+        PeriodDto: {
+            /** Format: date-time */
+            from: string;
+            /** Format: date-time */
+            to: string;
+        };
+        PipelineDto: {
+            /**
+             * @description Замовлення, які ще не стали грошима
+             * @example 3
+             */
+            orders: number;
+            /** @example 4160.00 */
+            amount: string;
+        };
+        OverviewDto: {
+            period: components["schemas"]["PeriodDto"];
+            /**
+             * @description Лише PAID, SHIPPED, DONE
+             * @example 7320.00
+             */
+            revenue: string;
+            /** @example 3 */
+            orders: number;
+            /** @example 2440.00 */
+            averageOrder: string;
+            /** @example 42 */
+            unitsSold: number;
+            /** @example 2 */
+            buyers: number;
+            pipeline: components["schemas"]["PipelineDto"];
+        };
+        StatusRowDto: {
+            /** @enum {string} */
+            status: "CREATED" | "PENDING_PAYMENT" | "PAID" | "SHIPPED" | "DONE" | "CANCELLED";
+            /** @example 2 */
+            orders: number;
+            /** @example 4520.00 */
+            amount: string;
+            /** @example true */
+            countsAsRevenue: boolean;
+        };
+        RoleRowDto: {
+            /** @enum {string} */
+            role: "ADMIN" | "CUSTOMER" | "DEALER";
+            /** @example 2 */
+            orders: number;
+            /** @example 4520.00 */
+            revenue: string;
+        };
+        TopProductDto: {
+            /** Format: uuid */
+            productId: string;
+            /** @example Мед липовий */
+            title: string;
+            /** @example 20 */
+            units: number;
+            /** @example 4000.00 */
+            revenue: string;
+        };
+        RevenueDayDto: {
+            /** @example 2026-08-18 */
+            day: string;
+            /** @example 3 */
+            orders: number;
+            /** @example 7320.00 */
+            revenue: string;
+        };
+        LowStockDto: {
+            /** Format: uuid */
+            id: string;
+            /** @example Мед липовий */
+            title: string;
+            /** @example med-lypovyi */
+            slug: string;
+            /** @example 4 */
+            stock: number;
         };
         SetRoleDto: {
             /**
@@ -793,6 +972,25 @@ export interface operations {
             };
         };
     };
+    ProductsController_byId: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     ProductsController_bySlug: {
         parameters: {
             query?: {
@@ -817,7 +1015,51 @@ export interface operations {
             };
         };
     };
-    ProductsController_upsertTier: {
+    ProductsController_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateProductDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductViewDto"];
+                };
+            };
+        };
+    };
+    ProductsController_listTiers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ProductsController_addTier: {
         parameters: {
             query?: never;
             header?: never;
@@ -836,7 +1078,55 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
+                content: {
+                    "application/json": components["schemas"]["PriceTierViewDto"];
+                };
+            };
+        };
+    };
+    ProductsController_removeTier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                tierId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
                 content?: never;
+            };
+        };
+    };
+    ProductsController_updateTier: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                tierId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdatePriceTierDto"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PriceTierViewDto"];
+                };
             };
         };
     };
@@ -967,7 +1257,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["OverviewDto"];
+                };
             };
         };
     };
@@ -989,7 +1281,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["StatusRowDto"][];
+                };
             };
         };
     };
@@ -1011,7 +1305,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["RoleRowDto"][];
+                };
             };
         };
     };
@@ -1034,7 +1330,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["TopProductDto"][];
+                };
             };
         };
     };
@@ -1056,14 +1354,16 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["RevenueDayDto"][];
+                };
             };
         };
     };
     StatsController_lowStock: {
         parameters: {
-            query: {
-                threshold: number;
+            query?: {
+                threshold?: number;
             };
             header?: never;
             path?: never;
@@ -1075,7 +1375,9 @@ export interface operations {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["LowStockDto"][];
+                };
             };
         };
     };

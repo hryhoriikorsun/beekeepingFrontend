@@ -7,8 +7,8 @@ import { useCartStore } from '@/lib/cart/store';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'адміністратор',
-  CUSTOMER: 'покупець',
-  DEALER: 'гуртовий покупець',
+  CUSTOMER: 'користувач',
+  DEALER: 'курєр',
 };
 
 export function SiteNav() {
@@ -32,6 +32,11 @@ export function SiteNav() {
         <span className="h-6 w-20 animate-pulse rounded bg-amber-100" />
       ) : user ? (
         <>
+          {user.role === 'ADMIN' && (
+            <Link href="/admin" className="rounded px-2 py-1 hover:bg-amber-100">
+              Адмінка
+            </Link>
+          )}
           <Link href="/orders" className="rounded px-2 py-1 hover:bg-amber-100">
             Замовлення
           </Link>

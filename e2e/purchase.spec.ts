@@ -16,8 +16,11 @@ test.describe('Шлях покупця', () => {
     // Retail price, because nobody is logged in yet.
     await expect(page.getByText('200,00', { exact: false }).first()).toBeVisible();
 
+    // The ladder is visible before anything is chosen, which is what the
+    // brief asks: the buyer sees what quantity buys what price.
+    await expect(page.getByRole('table')).toContainText('від 3 л');
     await page.getByLabel(/Кількість/).fill('3');
-    await expect(page.getByText(/Разом:\s*600,00/)).toBeVisible();
+    await expect(page.getByText(/Разом:\s*555,00/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Додати в кошик' }).click();
     await expect(page.getByText('Додано до кошика')).toBeVisible();
@@ -25,7 +28,7 @@ test.describe('Шлях покупця', () => {
     await page.getByRole('link', { name: /Кошик/ }).click();
     await expect(page).toHaveURL(/\/cart$/);
     await expect(page.getByRole('link', { name: 'Мед липовий' })).toBeVisible();
-    await expect(page.getByText(/Разом:\s*600,00/)).toBeVisible();
+    await expect(page.getByText(/Разом:\s*555,00/)).toBeVisible();
 
     // Checkout is gated: a guest is sent to log in and comes back.
     await page.getByRole('link', { name: 'Оформити замовлення' }).click();
@@ -48,14 +51,14 @@ test.describe('Шлях покупця', () => {
     await expect(page).toHaveURL(/\/orders\/[0-9a-f-]{36}$/);
     await expect(page.getByRole('heading', { name: /Замовлення №\d+/ })).toBeVisible();
     await expect(page.getByText('Прийнято')).toBeVisible();
-    await expect(page.getByText(/600,00/).first()).toBeVisible();
+    await expect(page.getByText(/555,00/).first()).toBeVisible();
 
     // The cart is emptied only after the server accepted the order.
     await page.getByRole('link', { name: /Кошик/ }).click();
     await expect(page.getByText('Кошик порожній.')).toBeVisible();
   });
 
-  test('гуртовий покупець бачить свою ціну на тій самій сторінці', async ({ page, request }) => {
+  test('курєр бачить свою ціну на тій самій сторінці', async ({ page, request }) => {
     const email = unique();
     const registration = await request.post(`${API}/auth/register`, {
       data: { email, password: PASSWORD },
@@ -80,7 +83,7 @@ test.describe('Шлях покупця', () => {
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Пароль').fill(PASSWORD);
     await page.getByRole('button', { name: 'Увійти' }).click();
-    await expect(page.getByText('гуртовий покупець')).toBeVisible();
+    await expect(page.getByText('курєр')).toBeVisible();
 
     await page.goto('/products/med-lypovyi');
     await expect(page.getByText(/Візьміть 20 л/)).toBeVisible();
@@ -89,7 +92,7 @@ test.describe('Шлях покупця', () => {
     // 20 x 100 wholesale, not 20 x 200 retail. The page never computed this:
     // it asked the API again with the new quantity and the dealer token.
     await expect(page.getByText(/Разом:\s*2\s?000,00/)).toBeVisible();
-    await expect(page.getByText(/Гуртова ціна від 20 л/)).toBeVisible();
+    await expect(page.getByText(/Ціна від 20 л/)).toBeVisible();
   });
 
   test('сесія переживає перезавантаження сторінки', async ({ page }) => {

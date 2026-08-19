@@ -36,6 +36,9 @@ export function ProductPurchase({ initial }: { initial: Product }) {
 
   const outOfStock = product.stock < 1;
   const tooMany = qty > product.stock;
+  // A page rendered before this field existed can still be served from the
+  // ISR cache after a deploy, so the shape is never assumed.
+  const ladder = product.tiers ?? [];
 
   return (
     <div className="rounded-xl border border-amber-200 bg-white p-6">
@@ -46,7 +49,7 @@ export function ProductPurchase({ initial }: { initial: Product }) {
 
       {product.appliedTier && (
         <p className="mt-1 text-sm text-green-700">
-          Гуртова ціна від {product.appliedTier.minQty} {product.unit}. Роздрібна —{' '}
+          Ціна від {product.appliedTier.minQty} {product.unit}. Звичайна —{' '}
           <s>{formatMoney(product.basePrice)}</s>
         </p>
       )}
@@ -55,6 +58,32 @@ export function ProductPurchase({ initial }: { initial: Product }) {
         <p className="mt-1 text-sm text-amber-700">
           Візьміть {product.nextTierAtQty} {product.unit} — і ціна стане нижчою
         </p>
+      )}
+
+      {ladder.length > 0 && (
+        <table className="mt-5 w-full text-sm">
+          <caption className="pb-2 text-left font-medium">Чим більше — тим дешевше</caption>
+          <tbody>
+            <tr className={product.appliedTier ? 'text-stone-500' : 'font-medium'}>
+              <td className="py-1">
+                до {ladder[0].minQty - 1} {product.unit}
+              </td>
+              <td className="py-1 text-right">{formatMoney(product.basePrice)}</td>
+            </tr>
+            {ladder.map((tier) => {
+              // The row in force is the one the current quantity reached.
+              const active = product.appliedTier?.minQty === tier.minQty;
+              return (
+                <tr key={tier.id} className={active ? 'font-medium text-green-700' : 'text-stone-500'}>
+                  <td className="py-1">
+                    від {tier.minQty} {product.unit}
+                  </td>
+                  <td className="py-1 text-right">{formatMoney(tier.price)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       )}
 
       <label className="mt-6 block text-sm font-medium" htmlFor="qty">
