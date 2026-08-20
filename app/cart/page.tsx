@@ -1,12 +1,22 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { CartView } from '@/components/cart-view';
+import { PageNav } from '@/components/ui';
 
 export const metadata: Metadata = { title: 'Кошик', robots: { index: false } };
 
 export default function CartPage() {
   return (
     <>
-      <h1 className="mb-6 text-2xl font-semibold">Кошик</h1>
+      <PageNav current="Кошик" />
+
+      <div className="page-head">
+        <h1>Кошик</h1>
+        <Link href="/" className="btn btn-secondary">
+          Додати ще
+        </Link>
+      </div>
+
       <CartView />
     </>
   );

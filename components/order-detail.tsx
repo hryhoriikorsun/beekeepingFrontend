@@ -43,42 +43,42 @@ export function OrderDetail({ id }: { id: string }) {
   });
 
   if (isPending) {
-    return <p className="text-stone-500">Завантаження…</p>;
+    return <p className="text-neutral-600">Завантаження…</p>;
   }
   if (error) {
-    return <p className="rounded bg-red-50 p-3 text-red-700">{error.message}</p>;
+    return <p className="alert alert-danger">{error.message}</p>;
   }
 
   return (
     <article>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Замовлення №{order.number}</h1>
+      <div className="page-head mb-2">
+        <h1>Замовлення №{order.number}</h1>
         <OrderStatusBadge status={order.status} />
       </div>
-      <p className="mt-1 text-sm text-stone-500">{formatDate(order.createdAt)}</p>
+      <p className="text-[13px] text-neutral-600">{formatDate(order.createdAt)}</p>
 
-      <ul className="mt-6 divide-y divide-amber-200 rounded-xl border border-amber-200 bg-white">
+      <ul className="card elev-sm mt-6">
         {order.items.map((item) => (
-          <li key={item.productId} className="flex items-center justify-between gap-4 p-4">
-            <div>
-              <p className="font-medium">{item.title}</p>
+          <li key={item.productId} className="cart-row">
+            <div className="flex-1">
+              <p className="font-semibold">{item.title}</p>
               {/* Price as it was when the order was placed, not today's. */}
-              <p className="text-sm text-stone-500">
+              <p className="text-[13px] text-neutral-600 tnum">
                 {item.qty} × {formatMoney(item.unitPrice)}
               </p>
             </div>
-            <span className="font-semibold">{formatMoney(item.lineTotal)}</span>
+            <span className="font-semibold tnum">{formatMoney(item.lineTotal)}</span>
           </li>
         ))}
       </ul>
 
-      <p className="mt-4 text-right text-xl">
-        Разом: <span className="font-semibold">{formatMoney(order.total)}</span>
+      <p className="mt-4 text-right font-heading text-[22px] font-extrabold">
+        Разом: <span className="tnum">{formatMoney(order.total)}</span>
       </p>
 
-      <section className="mt-8 rounded-xl border border-amber-200 bg-white p-4 text-sm">
-        <h2 className="font-medium">Доставка</h2>
-        <dl className="mt-2 grid gap-1 text-stone-600">
+      <section className="card elev-sm mt-8">
+        <h2 className="text-[19px]">Доставка</h2>
+        <dl className="mt-2 grid gap-1 text-[14px] text-neutral-700">
           <div className="flex gap-2">
             <dt>Отримувач:</dt>
             <dd>{order.customerName}</dd>
@@ -102,20 +102,16 @@ export function OrderDetail({ id }: { id: string }) {
         </dl>
       </section>
 
-      {cancel.error && (
-        <p className="mt-4 rounded bg-red-50 p-3 text-sm text-red-700">{cancel.error.message}</p>
-      )}
+      {cancel.error && <p className="alert alert-danger mt-4">{cancel.error.message}</p>}
 
-      <div className="mt-6 flex items-center gap-4">
-        <Link href="/orders" className="text-amber-700 underline">
-          Усі замовлення
-        </Link>
+      <div className="mt-6 flex flex-wrap items-center gap-4">
+        <Link href="/orders">Усі замовлення</Link>
         {CANCELLABLE.includes(order.status) && (
           <button
             type="button"
             onClick={() => cancel.mutate()}
             disabled={cancel.isPending}
-            className="rounded border border-red-300 px-4 py-2 text-sm text-red-700 hover:bg-red-50 disabled:opacity-50"
+            className="btn btn-danger"
           >
             {cancel.isPending ? 'Скасовуємо…' : 'Скасувати замовлення'}
           </button>

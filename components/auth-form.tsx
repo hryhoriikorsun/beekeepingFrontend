@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { login, register } from '@/lib/auth/actions';
+import { ArrowLeftIcon, HiveIcon } from './icons';
 
 export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const router = useRouter();
@@ -35,71 +36,78 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="mx-auto max-w-sm">
-      <h1 className="text-2xl font-semibold">{isLogin ? 'Вхід' : 'Реєстрація'}</h1>
+    <div className="mx-auto max-w-[820px]">
+      <Link href="/" className="back-btn mb-4">
+        <ArrowLeftIcon />
+        До каталогу
+      </Link>
 
-      {!isLogin && (
-        <label className="mt-6 block text-sm font-medium">
-          Імʼя
-          <input
-            name="name"
-            autoComplete="name"
-            className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
-          />
-        </label>
-      )}
+      <div className="split-grid items-stretch">
+        <aside className="login-side">
+          <div className="blob blob-1" style={{ top: -90, right: -70 }} />
+          <HiveIcon size={40} className="relative" />
+          <h2 className="relative">{isLogin ? 'З поверненням' : 'Приєднуйтесь'}</h2>
+          <p className="relative m-0 opacity-90">
+            {isLogin
+              ? 'Увійдіть, щоб бачити свої замовлення та гуртові ціни на мед.'
+              : 'Реєстрація займе хвилину. Далі — замовлення і гуртові ціни для постійних покупців.'}
+          </p>
+        </aside>
 
-      <label className="mt-4 block text-sm font-medium">
-        Email
-        <input
-          name="email"
-          type="email"
-          required
-          autoComplete="email"
-          className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
-        />
-      </label>
+        <form onSubmit={onSubmit} className="card elev-lg flex flex-col justify-center gap-4">
+          <h1>{isLogin ? 'Вхід' : 'Реєстрація'}</h1>
 
-      <label className="mt-4 block text-sm font-medium">
-        Пароль
-        <input
-          name="password"
-          type="password"
-          required
-          minLength={8}
-          autoComplete={isLogin ? 'current-password' : 'new-password'}
-          className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
-        />
-        {!isLogin && <span className="text-xs font-normal text-stone-500">Мінімум 8 символів</span>}
-      </label>
+          {!isLogin && (
+            <label className="field">
+              <span className="field-label">Імʼя</span>
+              <input name="name" autoComplete="name" className="input" />
+            </label>
+          )}
 
-      {error && <p className="mt-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+          <label className="field">
+            <span className="field-label">Email</span>
+            <input
+              name="email"
+              type="email"
+              required
+              autoComplete="email"
+              placeholder="customer@beekeeping.local"
+              className="input"
+            />
+          </label>
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-6 w-full rounded-lg bg-amber-500 px-4 py-3 font-medium text-white hover:bg-amber-600 disabled:bg-stone-300"
-      >
-        {pending ? 'Зачекайте…' : isLogin ? 'Увійти' : 'Зареєструватися'}
-      </button>
+          <label className="field">
+            <span className="field-label">Пароль</span>
+            <input
+              name="password"
+              type="password"
+              required
+              minLength={8}
+              autoComplete={isLogin ? 'current-password' : 'new-password'}
+              className="input"
+            />
+            {!isLogin && <span className="field-hint">Мінімум 8 символів</span>}
+          </label>
 
-      <p className="mt-4 text-center text-sm text-stone-600">
-        {isLogin ? (
-          <>
-            Немає акаунта?{' '}
-            <Link href="/register" className="text-amber-700 underline">
-              Зареєструватися
-            </Link>
-          </>
-        ) : (
-          <>
-            Вже маєте акаунт?{' '}
-            <Link href="/login" className="text-amber-700 underline">
-              Увійти
-            </Link>
-          </>
-        )}
-      </p>
-    </form>
+          {error && <p className="alert alert-danger">{error}</p>}
+
+          <button type="submit" disabled={pending} className="btn btn-primary btn-block">
+            {pending ? 'Зачекайте…' : isLogin ? 'Увійти' : 'Зареєструватися'}
+          </button>
+
+          <p className="text-center text-[13px] text-neutral-700">
+            {isLogin ? (
+              <>
+                Немає акаунта? <Link href="/register">Зареєструватися</Link>
+              </>
+            ) : (
+              <>
+                Вже маєте акаунт? <Link href="/login">Увійти</Link>
+              </>
+            )}
+          </p>
+        </form>
+      </div>
+    </div>
   );
 }

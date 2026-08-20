@@ -1,50 +1,62 @@
 import Link from 'next/link';
 import { fetchProductsSafe } from '@/lib/api/server';
 import { formatMoney } from '@/lib/format';
+import { ProductPhoto } from '@/components/ui';
 
 export default async function CataloguePage() {
   const products = await fetchProductsSafe();
 
   return (
     <>
-      <section className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight">Мед з власної пасіки</h1>
-        <p className="mt-2 max-w-prose text-stone-600">
-          Свіжий урожай, доставка Новою поштою. Для гуртових покупців діють окремі ціни —
-          вони показуються після входу.
-        </p>
+      <section className="hero-band">
+        <div className="blob blob-1" />
+        <div className="blob blob-2" />
+        <div className="relative max-w-[56ch]">
+          <span className="tag tag-outline mb-3 inline-flex">Прямо з пасіки</span>
+          <h1 className="my-2">Мед з власної пасіки</h1>
+          <p className="m-0 opacity-90">
+            Свіжий урожай, доставка Новою поштою. Для гуртових покупців діють окремі ціни —
+            вони показуються після входу.
+          </p>
+        </div>
       </section>
 
       {products.length === 0 ? (
-        <p className="text-stone-600">Наразі товарів немає. Завітайте трохи пізніше.</p>
+        <div className="card elev-sm text-center">
+          <p className="text-neutral-700">Наразі товарів немає. Завітайте трохи пізніше.</p>
+        </div>
       ) : (
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="pasika-grid">
           {products.map((product) => (
-            <li key={product.id}>
-              <Link
-                href={`/products/${product.slug}`}
-                className="flex h-full flex-col rounded-xl border border-amber-200 bg-white p-5 transition hover:border-amber-400 hover:shadow-sm"
-              >
-                <h2 className="text-lg font-medium">{product.title}</h2>
+            <li key={product.id} className="flex">
+              <Link href={`/products/${product.slug}`} className="card elev-sm product-card">
+                <ProductPhoto title={product.title} />
+
+                <div className="kicker">З власної пасіки</div>
+                <h2 className="card-title">{product.title}</h2>
                 {product.description && (
-                  <p className="mt-1 line-clamp-2 text-sm text-stone-500">{product.description}</p>
+                  <p className="card-body m-0 line-clamp-2">{product.description}</p>
                 )}
 
-                <div className="mt-auto pt-4">
-                  <p className="text-xl font-semibold">
-                    {formatMoney(product.unitPrice)}
-                    <span className="text-sm font-normal text-stone-500"> / {product.unit}</span>
-                  </p>
+                <div className="mt-auto flex flex-col items-start gap-2 pt-2">
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="price-tag text-2xl">{formatMoney(product.unitPrice)}</span>
+                    <span className="text-[13px] text-neutral-600">/ {product.unit}</span>
+                  </div>
 
-                  {product.nextTierAtQty && (
-                    <p className="mt-1 text-sm text-amber-700">
-                      Дешевше від {product.nextTierAtQty} {product.unit}
-                    </p>
+                  {product.stock > 0 ? (
+                    <span className="tag tag-accent-2">
+                      В наявності: {product.stock} {product.unit}
+                    </span>
+                  ) : (
+                    <span className="tag tag-neutral">Немає в наявності</span>
                   )}
 
-                  <p className="mt-1 text-sm text-stone-500">
-                    {product.stock > 0 ? `В наявності: ${product.stock} ${product.unit}` : 'Немає в наявності'}
-                  </p>
+                  {product.nextTierAtQty && (
+                    <span className="tag tag-accent">
+                      Дешевше від {product.nextTierAtQty} {product.unit}
+                    </span>
+                  )}
                 </div>
               </Link>
             </li>

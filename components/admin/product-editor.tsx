@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
+import { ConfirmDeleteDialog } from './confirm-delete-dialog';
 import { api } from '@/lib/api/client';
 import { messageOf } from '@/lib/api/errors';
 import { formatMoney } from '@/lib/format';
@@ -30,7 +32,9 @@ interface Tier {
 
 export function ProductEditor({ id }: { id: string }) {
   const queryClient = useQueryClient();
+  const router = useRouter();
   const [saved, setSaved] = useState(false);
+  const [confirming, setConfirming] = useState(false);
 
   const { data: product, isPending, error } = useQuery({
     queryKey: ['admin', 'product', id],
@@ -100,12 +104,28 @@ export function ProductEditor({ id }: { id: string }) {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['admin', 'product', id] }),
   });
 
-  if (isPending) return <p className="text-stone-500">Завантаження…</p>;
-  if (error) return <p className="rounded bg-red-50 p-3 text-red-700">{error.message}</p>;
+  const remove = useMutation({
+    mutationFn: async () => {
+      const { error: apiError } = await api.DELETE('/products/{id}', {
+        params: { path: { id } },
+      });
+      if (apiError) {
+        throw new Error(messageOf(apiError, 'Не вдалося видалити товар'));
+      }
+    },
+    onSuccess: () => {
+      setConfirming(false);
+      void queryClient.invalidateQueries({ queryKey: ['admin'] });
+      router.push('/admin/products');
+    },
+  });
+
+  if (isPending) return <p className="text-neutral-600">Завантаження…</p>;
+  if (error) return <p className="alert alert-danger">{error.message}</p>;
 
   return (
     <>
-      <Link href="/admin/products" className="text-sm text-amber-700 underline">
+      <Link href="/admin/products" className="back-btn">
         ← Усі товари
       </Link>
 
@@ -115,7 +135,7 @@ export function ProductEditor({ id }: { id: string }) {
           setSaved(false);
           save.mutate(new FormData(e.currentTarget));
         }}
-        className="mt-4 grid gap-4 rounded-xl border border-amber-200 bg-white p-4 sm:grid-cols-2"
+        className="mt-4 grid gap-4 card elev-sm p-4 sm:grid-cols-2"
       >
         <h1 className="text-xl font-semibold sm:col-span-2">{product.title}</h1>
 
@@ -125,7 +145,7 @@ export function ProductEditor({ id }: { id: string }) {
             name="title"
             defaultValue={product.title}
             required
-            className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+            className="input mt-1"
           />
         </label>
         <label className="text-sm font-medium">
@@ -135,7 +155,7 @@ export function ProductEditor({ id }: { id: string }) {
             defaultValue={product.slug}
             required
             pattern="[a-z0-9]+(-[a-z0-9]+)*"
-            className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+            className="input mt-1"
           />
         </label>
         <label className="text-sm font-medium sm:col-span-2">
@@ -144,7 +164,7 @@ export function ProductEditor({ id }: { id: string }) {
             name="description"
             rows={2}
             defaultValue={product.description ?? ''}
-            className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+            className="input mt-1"
           />
         </label>
         <label className="text-sm font-medium">
@@ -156,7 +176,7 @@ export function ProductEditor({ id }: { id: string }) {
             min="0"
             defaultValue={product.basePrice}
             required
-            className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+            className="input mt-1"
           />
         </label>
         <div className="grid grid-cols-2 gap-4">
@@ -165,7 +185,7 @@ export function ProductEditor({ id }: { id: string }) {
             <input
               name="unit"
               defaultValue={product.unit}
-              className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+              className="input mt-1"
             />
           </label>
           <label className="text-sm font-medium">
@@ -175,7 +195,7 @@ export function ProductEditor({ id }: { id: string }) {
               type="number"
               min="0"
               defaultValue={product.stock}
-              className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+              className="input mt-1"
             />
           </label>
         </div>
@@ -186,12 +206,12 @@ export function ProductEditor({ id }: { id: string }) {
         </label>
 
         {save.error && (
-          <p className="rounded bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">
+          <p className="alert alert-danger sm:col-span-2">
             {(save.error as Error).message}
           </p>
         )}
         {saved && !save.isPending && (
-          <p className="rounded bg-green-50 p-3 text-sm text-green-700 sm:col-span-2">
+          <p className="rounded bg-green-50 p-3 text-sm text-accent-2-700 sm:col-span-2">
             Збережено. Ціни в уже оформлених замовленнях не змінились.
           </p>
         )}
@@ -199,14 +219,14 @@ export function ProductEditor({ id }: { id: string }) {
         <button
           type="submit"
           disabled={save.isPending}
-          className="rounded-lg bg-amber-500 px-4 py-2 font-medium text-white hover:bg-amber-600 disabled:bg-stone-300 sm:col-span-2"
+          className="btn btn-primary sm:col-span-2"
         >
           {save.isPending ? 'Зберігаємо…' : 'Зберегти'}
         </button>
       </form>
 
       <h2 className="mt-8 text-lg font-semibold">Пороги знижок</h2>
-      <p className="mt-1 text-sm text-stone-600">
+      <p className="mt-1 text-sm text-neutral-700">
         Кожен поріг вмикається, коли кількість одного товару досягає вказаної. Драбини для
         користувача та курєра незалежні, до {MAX_TIERS} порогів у кожній.
       </p>
@@ -225,6 +245,36 @@ export function ProductEditor({ id }: { id: string }) {
           />
         ))}
       </div>
+
+      <section aria-label="Видалення товару" className="mt-8 card elev-sm p-4">
+        <h2 className="text-[19px] font-semibold">Видалити товар</h2>
+        <p className="mt-1 text-sm text-neutral-700">
+          Товар і його пороги зникнуть назавжди. Оформлені замовлення це не змінить — вони
+          зберігають власну копію назви й ціни. Якщо товар просто закінчився, приберіть його
+          з каталогу галочкою вище.
+        </p>
+        <button
+          type="button"
+          className="btn btn-danger mt-4"
+          onClick={() => setConfirming(true)}
+        >
+          Видалити товар
+        </button>
+      </section>
+
+      <ConfirmDeleteDialog
+        open={confirming}
+        expected={product.title}
+        title="Видалити товар?"
+        description="Цю дію не можна скасувати."
+        pending={remove.isPending}
+        error={remove.error ? (remove.error as Error).message : null}
+        onCancel={() => {
+          remove.reset();
+          setConfirming(false);
+        }}
+        onConfirm={() => remove.mutate()}
+      />
     </>
   );
 }
@@ -249,13 +299,13 @@ function TierLadder({
   const full = tiers.length >= MAX_TIERS;
 
   return (
-    <section aria-label={ROLE_TITLE[role]} className="rounded-xl border border-amber-200 bg-white p-4">
+    <section aria-label={ROLE_TITLE[role]} className="card elev-sm p-4">
       <h3 className="font-medium">{ROLE_TITLE[role]}</h3>
-      <p className="mt-1 text-sm text-stone-500">{ROLE_HINT[role]}</p>
+      <p className="mt-1 text-sm text-neutral-600">{ROLE_HINT[role]}</p>
 
       <table className="mt-3 w-full text-sm">
-        <tbody className="divide-y divide-amber-100">
-          <tr className="text-stone-500">
+        <tbody className="divide-y divide-neutral-200">
+          <tr className="text-neutral-600">
             <td className="py-2">без порога</td>
             <td className="py-2 text-right">{formatMoney(basePrice)}</td>
             <td />
@@ -270,7 +320,7 @@ function TierLadder({
                 <button
                   type="button"
                   onClick={() => onRemove(tier.id)}
-                  className="text-xs text-stone-500 hover:text-red-700"
+                  className="text-xs text-neutral-600 hover:text-danger"
                 >
                   прибрати
                 </button>
@@ -289,17 +339,17 @@ function TierLadder({
         }}
         className="mt-4 flex flex-wrap items-end gap-2"
       >
-        <label className="text-xs text-stone-600">
+        <label className="text-xs text-neutral-700">
           від, {unit}
           <input
             name="minQty"
             type="number"
             min="1"
             required
-            className="mt-1 block h-9 w-24 rounded border border-amber-300 px-2"
+            className="input mt-1 block w-24"
           />
         </label>
-        <label className="text-xs text-stone-600">
+        <label className="text-xs text-neutral-700">
           ціна, грн
           <input
             name="price"
@@ -307,13 +357,13 @@ function TierLadder({
             step="0.01"
             min="0"
             required
-            className="mt-1 block h-9 w-28 rounded border border-amber-300 px-2"
+            className="input mt-1 block w-28"
           />
         </label>
         <button
           type="submit"
           disabled={full}
-          className="h-9 rounded bg-amber-500 px-3 text-sm font-medium text-white hover:bg-amber-600 disabled:bg-stone-300"
+          className="btn btn-primary"
           // Sending the same threshold again edits its price instead of
           // adding a row, which is why a full ladder is still editable.
           title={full ? `Уже ${MAX_TIERS} пороги` : undefined}
@@ -322,8 +372,8 @@ function TierLadder({
         </button>
       </form>
 
-      {full && <p className="mt-2 text-xs text-stone-500">Максимум {MAX_TIERS} порогів.</p>}
-      {error && <p className="mt-2 rounded bg-red-50 p-2 text-xs text-red-700">{error}</p>}
+      {full && <p className="mt-2 text-xs text-neutral-600">Максимум {MAX_TIERS} порогів.</p>}
+      {error && <p className="alert alert-danger mt-2">{error}</p>}
     </section>
   );
 }

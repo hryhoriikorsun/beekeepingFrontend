@@ -1,7 +1,14 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 const API = process.env.E2E_API_URL ?? 'http://localhost:3000';
 const PASSWORD = 'password123';
+
+/// Everything except the cart lives behind the burger, so the menu has to be
+/// opened before the session can be checked.
+async function openMenu(page: Page) {
+  await page.getByRole('banner').getByRole('button', { name: 'Меню' }).click();
+  return page.getByRole('navigation', { name: 'Основне меню' });
+}
 
 const unique = () => `buyer-${Date.now()}-${Math.floor(Math.random() * 1000)}@test.local`;
 
@@ -83,7 +90,8 @@ test.describe('Шлях покупця', () => {
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Пароль').fill(PASSWORD);
     await page.getByRole('button', { name: 'Увійти' }).click();
-    await expect(page.getByText('курєр')).toBeVisible();
+    await expect((await openMenu(page)).getByText('курєр')).toBeVisible();
+    await page.keyboard.press('Escape');
 
     await page.goto('/products/med-lypovyi');
     await expect(page.getByText(/Візьміть 20 л/)).toBeVisible();
@@ -103,20 +111,22 @@ test.describe('Шлях покупця', () => {
     await page.getByLabel('Email').fill(email);
     await page.getByLabel('Пароль').fill(PASSWORD);
     await page.getByRole('button', { name: 'Зареєструватися' }).click();
-    await expect(page.getByText(email)).toBeVisible();
+    await expect((await openMenu(page)).getByText(email)).toBeVisible();
+    await page.keyboard.press('Escape');
 
     // The access token is deliberately lost on reload; the httpOnly refresh
     // cookie must bring the session back without a second login.
     await page.reload();
-    await expect(page.getByText(email)).toBeVisible();
+    const menu = await openMenu(page);
+    await expect(menu.getByText(email)).toBeVisible();
 
-    const header = page.getByRole('banner');
-    await header.getByRole('button', { name: 'Вийти' }).click();
-    await expect(header.getByRole('link', { name: 'Увійти' })).toBeVisible();
+    await menu.getByRole('button', { name: 'Вийти' }).click();
+    await expect((await openMenu(page)).getByRole('link', { name: 'Увійти' })).toBeVisible();
+    await page.keyboard.press('Escape');
 
     // Logging out must survive a reload: the refresh cookie is revoked on
     // the server, not merely forgotten in the tab.
     await page.reload();
-    await expect(header.getByRole('link', { name: 'Увійти' })).toBeVisible();
+    await expect((await openMenu(page)).getByRole('link', { name: 'Увійти' })).toBeVisible();
   });
 });

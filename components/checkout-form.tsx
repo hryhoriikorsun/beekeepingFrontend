@@ -16,12 +16,12 @@ export function CheckoutForm() {
 
   if (lines.length === 0) {
     return (
-      <p className="text-stone-600">
-        Кошик порожній.{' '}
-        <Link href="/" className="text-amber-700 underline">
+      <div className="card elev-sm py-8 text-center">
+        <p className="mb-3 text-neutral-700">Кошик порожній.</p>
+        <Link href="/" className="btn btn-secondary">
           До каталогу
         </Link>
-      </p>
+      </div>
     );
   }
 
@@ -58,75 +58,53 @@ export function CheckoutForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="max-w-lg">
-      <h1 className="text-2xl font-semibold">Оформлення замовлення</h1>
+    <form onSubmit={onSubmit} className="card elev-lg flex max-w-[560px] flex-col gap-4">
+      <h1>Оформлення замовлення</h1>
 
-      <label className="mt-6 block text-sm font-medium">
-        Отримувач
-        <input
-          name="customerName"
-          required
-          maxLength={120}
-          autoComplete="name"
-          className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
-        />
+      <label className="field">
+        <span className="field-label">Отримувач</span>
+        <input name="customerName" required maxLength={120} autoComplete="name" className="input" />
       </label>
 
-      <label className="mt-4 block text-sm font-medium">
-        Телефон
+      <label className="field">
+        <span className="field-label">Телефон</span>
         <input
           name="customerPhone"
           required
           placeholder="+380671234567"
           pattern="\+380[0-9]{9}"
           autoComplete="tel"
-          className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+          className="input"
         />
-        <span className="text-xs font-normal text-stone-500">У форматі +380XXXXXXXXX</span>
+        <span className="field-hint">У форматі +380XXXXXXXXX</span>
       </label>
 
-      <label className="mt-4 block text-sm font-medium">
-        Місто
-        <input
-          name="city"
-          required
-          maxLength={120}
-          className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
-        />
+      <label className="field">
+        <span className="field-label">Місто</span>
+        <input name="city" required maxLength={120} className="input" />
       </label>
 
-      <label className="mt-4 block text-sm font-medium">
-        Відділення Нової пошти
+      <label className="field">
+        <span className="field-label">Відділення Нової пошти</span>
         <input
           name="warehouse"
           required
           maxLength={200}
           placeholder="Відділення №12"
-          className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+          className="input"
         />
       </label>
 
-      <label className="mt-4 block text-sm font-medium">
-        Коментар
-        <textarea
-          name="comment"
-          rows={3}
-          maxLength={500}
-          className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
-        />
+      <label className="field">
+        <span className="field-label">Коментар</span>
+        <textarea name="comment" rows={3} maxLength={500} className="input" />
       </label>
 
-      <p className="mt-6 rounded bg-amber-100 p-3 text-sm text-stone-700">
-        Оплата при отриманні на відділенні Нової пошти.
-      </p>
+      <p className="alert alert-info">Оплата при отриманні на відділенні Нової пошти.</p>
 
-      {error && <p className="mt-4 rounded bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+      {error && <p className="alert alert-danger">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="mt-6 w-full rounded-lg bg-amber-500 px-4 py-3 font-medium text-white hover:bg-amber-600 disabled:bg-stone-300"
-      >
+      <button type="submit" disabled={pending} className="btn btn-primary btn-block">
         {pending ? 'Оформлюємо…' : 'Підтвердити замовлення'}
       </button>
     </form>

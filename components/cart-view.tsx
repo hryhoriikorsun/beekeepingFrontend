@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { useAuthStore } from '@/lib/auth/store';
 import { useCartStore } from '@/lib/cart/store';
 import { formatMoney } from '@/lib/format';
+import { TrashIcon } from './icons';
 import type { Product } from '@/lib/api/types';
 
 export function CartView() {
@@ -37,9 +38,9 @@ export function CartView() {
 
   if (lines.length === 0) {
     return (
-      <div className="text-stone-600">
-        <p>Кошик порожній.</p>
-        <Link href="/" className="mt-4 inline-block text-amber-700 underline">
+      <div className="card elev-sm py-8 text-center">
+        <p className="mb-3 text-neutral-700">Кошик порожній.</p>
+        <Link href="/" className="btn btn-secondary">
           До каталогу
         </Link>
       </div>
@@ -52,29 +53,31 @@ export function CartView() {
 
   return (
     <div>
-      <ul className="divide-y divide-amber-200 rounded-xl border border-amber-200 bg-white">
+      <ul className="card elev-sm mb-6">
         {lines.map((line, index) => {
           const product = results[index].data;
           const tooMany = product ? line.qty > product.stock : false;
 
           return (
-            <li key={line.productId} className="flex flex-wrap items-center gap-4 p-4">
-              <div className="min-w-40 flex-1">
-                <Link href={`/products/${line.slug}`} className="font-medium hover:underline">
+            <li key={line.productId} className="cart-row">
+              <div className="min-w-35 flex-1">
+                <Link href={`/products/${line.slug}`} className="font-semibold text-text">
                   {line.title}
                 </Link>
                 {product?.appliedTier && (
-                  <p className="text-sm text-green-700">
+                  <p className="text-[13px] text-accent-2-700">
                     Гуртова ціна від {product.appliedTier.minQty} {line.unit}
                   </p>
                 )}
                 {product?.nextTierAtQty && (
-                  <p className="text-sm text-amber-700">
+                  <p className="text-[13px] text-accent-700">
                     Від {product.nextTierAtQty} {line.unit} буде дешевше
                   </p>
                 )}
                 {tooMany && (
-                  <p className="text-sm text-red-700">На складі лише {product?.stock} {line.unit}</p>
+                  <p className="text-[13px] text-danger">
+                    На складі лише {product?.stock} {line.unit}
+                  </p>
                 )}
               </div>
 
@@ -83,28 +86,27 @@ export function CartView() {
                 min={1}
                 value={line.qty}
                 onChange={(e) => setQty(line.productId, Number(e.target.value) || 1)}
-                className="h-10 w-20 rounded border border-amber-300 px-3 text-center"
+                className="input qty-input"
                 aria-label={`Кількість, ${line.title}`}
               />
 
-              <div className="w-32 text-right">
+              <div className="min-w-27 flex-1 text-right">
                 {product ? (
                   <>
-                    <p className="font-semibold">{formatMoney(product.total)}</p>
-                    <p className="text-sm text-stone-500">
+                    <p key={product.total} className="price-flash font-semibold tnum">
+                      {formatMoney(product.total)}
+                    </p>
+                    <p className="text-xs text-neutral-600">
                       {formatMoney(product.unitPrice)} / {line.unit}
                     </p>
                   </>
                 ) : (
-                  <span className="text-sm text-stone-400">рахуємо…</span>
+                  <span className="text-[13px] text-neutral-600">рахуємо…</span>
                 )}
               </div>
 
-              <button
-                type="button"
-                onClick={() => remove(line.productId)}
-                className="text-sm text-stone-500 hover:text-red-700"
-              >
+              <button type="button" onClick={() => remove(line.productId)} className="icon-btn-plain">
+                <TrashIcon />
                 Прибрати
               </button>
             </li>
@@ -112,26 +114,21 @@ export function CartView() {
         })}
       </ul>
 
-      <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <p className="text-xl">
-          Разом:{' '}
-          <span className="font-semibold">
-            {priced ? formatMoney(total.toFixed(2)) : '—'}
-          </span>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <p className="font-heading text-[22px] font-extrabold">
+          Разом: <span className="tnum">{priced ? formatMoney(total.toFixed(2)) : '—'}</span>
         </p>
 
         <Link
           href={overStock ? '#' : '/checkout'}
           aria-disabled={overStock}
-          className={`rounded-lg px-6 py-3 font-medium text-white ${
-            overStock ? 'pointer-events-none bg-stone-300' : 'bg-amber-500 hover:bg-amber-600'
-          }`}
+          className={`btn btn-primary ${overStock ? 'pointer-events-none' : ''}`}
         >
           Оформити замовлення
         </Link>
       </div>
 
-      <p className="mt-3 text-sm text-stone-500">
+      <p className="mt-3 text-xs text-neutral-600">
         Остаточну суму рахує сервер під час оформлення — вона може відрізнятися, якщо
         прайс змінився.
       </p>

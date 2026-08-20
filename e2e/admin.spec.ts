@@ -3,19 +3,29 @@ import { expect, test, type Page } from '@playwright/test';
 const PASSWORD = 'password123';
 const slug = () => `test-med-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
+/// Everything except the cart lives behind the burger, so the menu has to be
+/// opened before the session or any destination can be checked.
+async function openMenu(page: Page) {
+  await page.getByRole('banner').getByRole('button', { name: 'Меню' }).click();
+  return page.getByRole('navigation', { name: 'Основне меню' });
+}
+
 async function loginAs(page: Page, email: string) {
   await page.goto('/login');
   await expect(page.getByRole('heading', { name: 'Вхід' })).toBeVisible();
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Пароль').fill(PASSWORD);
   await page.getByRole('button', { name: 'Увійти' }).click();
-  await expect(page.getByText(email)).toBeVisible();
+
+  const menu = await openMenu(page);
+  await expect(menu.getByText(email)).toBeVisible();
+  await page.keyboard.press('Escape');
 }
 
 test.describe('Адмін', () => {
   test('бачить статистику', async ({ page }) => {
     await loginAs(page, 'admin@beekeeping.local');
-    await page.getByRole('link', { name: 'Адмінка' }).click();
+    await (await openMenu(page)).getByRole('link', { name: 'Адмінка' }).click();
 
     await expect(page).toHaveURL(/\/admin$/);
     await expect(page.getByText('Виторг', { exact: true })).toBeVisible();
@@ -64,6 +74,47 @@ test.describe('Адмін', () => {
 
     await page.getByLabel(/Кількість/).fill('5');
     await expect(page.getByText(/Разом:\s*1\s?400,00/)).toBeVisible();
+  });
+
+  test('видаляє товар лише після введення його назви', async ({ page }) => {
+    const productSlug = slug();
+    const title = `Мед ${productSlug}`;
+
+    await loginAs(page, 'admin@beekeeping.local');
+    await page.goto('/admin/products');
+    await page.getByRole('button', { name: 'Додати товар' }).click();
+    await page.getByLabel('Назва').fill(title);
+    await page.getByLabel('Slug (адреса сторінки)').fill(productSlug);
+    await page.getByLabel('Ціна, грн').fill('250');
+    await page.getByRole('button', { name: 'Створити' }).click();
+
+    await page.getByRole('link', { name: new RegExp(productSlug) }).click();
+    await page.getByRole('button', { name: 'Видалити товар' }).click();
+
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    const confirm = dialog.getByRole('button', { name: 'Видалити' });
+
+    // Nothing typed, then the wrong thing typed: the button stays out of reach.
+    await expect(confirm).toBeDisabled();
+    await dialog.getByRole('textbox').fill('Мед');
+    await expect(confirm).toBeDisabled();
+
+    await dialog.getByRole('button', { name: 'Відмінити' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole('heading', { name: title })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Видалити товар' }).click();
+    await dialog.getByRole('textbox').fill(title);
+    await expect(confirm).toBeEnabled();
+    await confirm.click();
+
+    await expect(page).toHaveURL(/\/admin\/products$/);
+    await expect(page.getByRole('link', { name: new RegExp(productSlug) })).toHaveCount(0);
+
+    // Gone from the shop as well, not merely from the admin list.
+    await page.goto(`/products/${productSlug}`);
+    await expect(page.getByText('404')).toBeVisible();
   });
 
   test('не пускає користувача до адмінки', async ({ page }) => {

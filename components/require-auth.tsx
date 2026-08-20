@@ -20,7 +20,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   }, [status, router, pathname]);
 
   if (status !== 'authenticated') {
-    return <p className="text-stone-500">Завантаження…</p>;
+    return <p className="text-neutral-600">Завантаження…</p>;
   }
   return <>{children}</>;
 }

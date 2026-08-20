@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { useAuthStore } from '@/lib/auth/store';
 import { useCartStore } from '@/lib/cart/store';
 import { formatMoney } from '@/lib/format';
+import { BasketIcon } from './icons';
 import type { Product } from '@/lib/api/types';
 
 export function ProductPurchase({ initial }: { initial: Product }) {
@@ -41,44 +42,50 @@ export function ProductPurchase({ initial }: { initial: Product }) {
   const ladder = product.tiers ?? [];
 
   return (
-    <div className="rounded-xl border border-amber-200 bg-white p-6">
-      <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-semibold">{formatMoney(product.unitPrice)}</span>
-        <span className="text-stone-500">/ {product.unit}</span>
+    <div className="card elev-lg flex flex-col gap-4">
+      <div>
+        <div className="flex items-baseline gap-2">
+          {/* Remounting on a price change replays the flash: crossing a tier
+              threshold is the one moment worth animating. */}
+          <span key={product.unitPrice} className="price-tag price-flash text-[34px]">
+            {formatMoney(product.unitPrice)}
+          </span>
+          <span className="text-neutral-600">/ {product.unit}</span>
+        </div>
+
+        {product.appliedTier && (
+          <p className="mt-1 text-sm text-accent-2-700">
+            Ціна від {product.appliedTier.minQty} {product.unit}. Звичайна —{' '}
+            <s>{formatMoney(product.basePrice)}</s>
+          </p>
+        )}
+
+        {product.nextTierAtQty && (
+          <p className="mt-1 text-sm text-accent-700">
+            Візьміть {product.nextTierAtQty} {product.unit} — і ціна стане нижчою
+          </p>
+        )}
       </div>
 
-      {product.appliedTier && (
-        <p className="mt-1 text-sm text-green-700">
-          Ціна від {product.appliedTier.minQty} {product.unit}. Звичайна —{' '}
-          <s>{formatMoney(product.basePrice)}</s>
-        </p>
-      )}
-
-      {product.nextTierAtQty && (
-        <p className="mt-1 text-sm text-amber-700">
-          Візьміть {product.nextTierAtQty} {product.unit} — і ціна стане нижчою
-        </p>
-      )}
-
       {ladder.length > 0 && (
-        <table className="mt-5 w-full text-sm">
-          <caption className="pb-2 text-left font-medium">Чим більше — тим дешевше</caption>
+        <table className="tier-table">
+          <caption>Чим більше — тим дешевше</caption>
           <tbody>
-            <tr className={product.appliedTier ? 'text-stone-500' : 'font-medium'}>
-              <td className="py-1">
+            <tr className={product.appliedTier ? undefined : 'tier-row-active'}>
+              <td>
                 до {ladder[0].minQty - 1} {product.unit}
               </td>
-              <td className="py-1 text-right">{formatMoney(product.basePrice)}</td>
+              <td>{formatMoney(product.basePrice)}</td>
             </tr>
             {ladder.map((tier) => {
               // The row in force is the one the current quantity reached.
               const active = product.appliedTier?.minQty === tier.minQty;
               return (
-                <tr key={tier.id} className={active ? 'font-medium text-green-700' : 'text-stone-500'}>
-                  <td className="py-1">
+                <tr key={tier.id} className={active ? 'tier-row-active' : undefined}>
+                  <td>
                     від {tier.minQty} {product.unit}
                   </td>
-                  <td className="py-1 text-right">{formatMoney(tier.price)}</td>
+                  <td>{formatMoney(tier.price)}</td>
                 </tr>
               );
             })}
@@ -86,39 +93,39 @@ export function ProductPurchase({ initial }: { initial: Product }) {
         </table>
       )}
 
-      <label className="mt-6 block text-sm font-medium" htmlFor="qty">
-        Кількість, {product.unit}
-      </label>
-      <div className="mt-2 flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setQty((q) => Math.max(1, q - 1))}
-          className="h-10 w-10 rounded border border-amber-300 text-lg hover:bg-amber-50"
-          aria-label="Зменшити кількість"
-        >
-          −
-        </button>
-        <input
-          id="qty"
-          type="number"
-          min={1}
-          value={qty}
-          onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
-          className="h-10 w-20 rounded border border-amber-300 px-3 text-center"
-        />
-        <button
-          type="button"
-          onClick={() => setQty((q) => q + 1)}
-          className="h-10 w-10 rounded border border-amber-300 text-lg hover:bg-amber-50"
-          aria-label="Збільшити кількість"
-        >
-          +
-        </button>
+      <div className="field">
+        <label htmlFor="qty">Кількість, {product.unit}</label>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setQty((q) => Math.max(1, q - 1))}
+            className="qty-btn"
+            aria-label="Зменшити кількість"
+          >
+            −
+          </button>
+          <input
+            id="qty"
+            type="number"
+            min={1}
+            value={qty}
+            onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
+            className="input qty-input"
+          />
+          <button
+            type="button"
+            onClick={() => setQty((q) => q + 1)}
+            className="qty-btn"
+            aria-label="Збільшити кількість"
+          >
+            +
+          </button>
+        </div>
       </div>
 
-      <p className="mt-4 text-lg">
-        Разом: <span className="font-semibold">{formatMoney(product.total)}</span>
-        {isFetching && <span className="ml-2 text-sm text-stone-400">оновлюємо…</span>}
+      <p className="text-[15px]">
+        Разом: <strong className="tnum">{formatMoney(product.total)}</strong>
+        {isFetching && <span className="ml-2 text-sm text-neutral-600">оновлюємо…</span>}
       </p>
 
       <button
@@ -134,13 +141,14 @@ export function ProductPurchase({ initial }: { initial: Product }) {
           });
           setAdded(true);
         }}
-        className="mt-4 w-full rounded-lg bg-amber-500 px-4 py-3 font-medium text-white transition hover:bg-amber-600 disabled:cursor-not-allowed disabled:bg-stone-300"
+        className="btn btn-primary btn-block"
       >
+        <BasketIcon size={16} />
         {outOfStock ? 'Немає в наявності' : tooMany ? 'Стільки немає на складі' : 'Додати в кошик'}
       </button>
 
       {added && !tooMany && (
-        <p className="mt-2 text-center text-sm text-green-700">Додано до кошика</p>
+        <p className="text-center text-sm text-accent-2-700">Додано до кошика</p>
       )}
     </div>
   );

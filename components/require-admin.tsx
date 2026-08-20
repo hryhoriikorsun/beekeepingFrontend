@@ -17,10 +17,10 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
   }, [status, router]);
 
   if (status !== 'authenticated') {
-    return <p className="text-stone-500">Завантаження…</p>;
+    return <p className="text-neutral-600">Завантаження…</p>;
   }
   if (user?.role !== 'ADMIN') {
-    return <p className="rounded bg-red-50 p-3 text-red-700">Цей розділ лише для адміністратора.</p>;
+    return <p className="alert alert-danger">Цей розділ лише для адміністратора.</p>;
   }
   return <>{children}</>;
 }

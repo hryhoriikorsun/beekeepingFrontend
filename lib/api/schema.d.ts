@@ -168,7 +168,8 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        delete?: never;
+        /** Видалити товар (адмін) */
+        delete: operations["ProductsController_remove"];
         options?: never;
         head?: never;
         /** Редагувати товар (адмін) */
@@ -1012,6 +1013,25 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProductViewDto"];
                 };
+            };
+        };
+    };
+    ProductsController_remove: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

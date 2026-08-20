@@ -1,8 +1,27 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Bitter, Manrope } from 'next/font/google';
 import { Providers } from './providers';
-import { SiteNav } from '@/components/site-nav';
+import { BackgroundDecor } from '@/components/background-decor';
+import { SiteHeader } from '@/components/site-nav';
 import './globals.css';
+
+/**
+ * DEVIATION from the handoff: it names Caprasimo + Figtree, and neither ships
+ * a Cyrillic subset - every Ukrainian heading would fall back to a system
+ * font. Bitter (heavy warm slab) and Manrope (friendly geometric sans) carry
+ * the same tone and cover cyrillic.
+ */
+const display = Bitter({
+  subsets: ['cyrillic', 'latin'],
+  variable: '--font-display',
+  display: 'swap',
+});
+
+const text = Manrope({
+  subsets: ['cyrillic', 'latin'],
+  variable: '--font-text',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -16,23 +35,20 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="uk">
-      <body className="min-h-screen bg-amber-50 text-stone-900 antialiased">
+    <html lang="uk" className={`${display.variable} ${text.variable}`}>
+      <body>
         <Providers>
-          <header className="border-b border-amber-200 bg-white/80 backdrop-blur">
-            <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
-              <Link href="/" className="text-lg font-semibold tracking-tight">
-                🍯 Пасіка
-              </Link>
-              <SiteNav />
-            </div>
-          </header>
+          <BackgroundDecor />
 
-          <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+          <div className="page-root">
+            <SiteHeader />
 
-          <footer className="mx-auto max-w-5xl px-4 py-10 text-sm text-stone-500">
-            Мед з власної пасіки. Доставка Новою поштою.
-          </footer>
+            <main className="page-main pasika-page">{children}</main>
+
+            <footer className="site-footer">
+              Мед з власної пасіки. Доставка Новою поштою.
+            </footer>
+          </div>
         </Providers>
       </body>
     </html>

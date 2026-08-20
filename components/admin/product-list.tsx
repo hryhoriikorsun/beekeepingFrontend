@@ -49,11 +49,11 @@ export function ProductList() {
   return (
     <>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Товари</h1>
+        <h1 >Товари</h1>
         <button
           type="button"
           onClick={() => setOpen((v) => !v)}
-          className="rounded-lg bg-amber-500 px-4 py-2 font-medium text-white hover:bg-amber-600"
+          className="btn btn-primary"
         >
           {open ? 'Згорнути' : 'Додати товар'}
         </button>
@@ -65,11 +65,11 @@ export function ProductList() {
             e.preventDefault();
             create.mutate(new FormData(e.currentTarget));
           }}
-          className="mb-6 grid gap-4 rounded-xl border border-amber-200 bg-white p-4 sm:grid-cols-2"
+          className="mb-6 grid gap-4 card elev-sm p-4 sm:grid-cols-2"
         >
           <label className="text-sm font-medium">
             Назва
-            <input name="title" required className="mt-1 w-full rounded border border-amber-300 px-3 py-2" />
+            <input name="title" required className="input mt-1" />
           </label>
           <label className="text-sm font-medium">
             Slug (адреса сторінки)
@@ -78,12 +78,12 @@ export function ProductList() {
               required
               pattern="[a-z0-9]+(-[a-z0-9]+)*"
               placeholder="med-lypovyi"
-              className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+              className="input mt-1"
             />
           </label>
           <label className="text-sm font-medium sm:col-span-2">
             Опис
-            <textarea name="description" rows={2} className="mt-1 w-full rounded border border-amber-300 px-3 py-2" />
+            <textarea name="description" rows={2} className="input mt-1" />
           </label>
           <label className="text-sm font-medium">
             Ціна, грн
@@ -93,13 +93,13 @@ export function ProductList() {
               step="0.01"
               min="0"
               required
-              className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+              className="input mt-1"
             />
           </label>
           <div className="grid grid-cols-2 gap-4">
             <label className="text-sm font-medium">
               Одиниця
-              <input name="unit" defaultValue="л" className="mt-1 w-full rounded border border-amber-300 px-3 py-2" />
+              <input name="unit" defaultValue="л" className="input mt-1" />
             </label>
             <label className="text-sm font-medium">
               Залишок
@@ -108,17 +108,17 @@ export function ProductList() {
                 type="number"
                 min="0"
                 defaultValue={0}
-                className="mt-1 w-full rounded border border-amber-300 px-3 py-2"
+                className="input mt-1"
               />
             </label>
           </div>
 
-          {error && <p className="rounded bg-red-50 p-3 text-sm text-red-700 sm:col-span-2">{error}</p>}
+          {error && <p className="alert alert-danger sm:col-span-2">{error}</p>}
 
           <button
             type="submit"
             disabled={create.isPending}
-            className="rounded-lg bg-amber-500 px-4 py-2 font-medium text-white hover:bg-amber-600 disabled:bg-stone-300 sm:col-span-2"
+            className="btn btn-primary sm:col-span-2"
           >
             {create.isPending ? 'Зберігаємо…' : 'Створити'}
           </button>
@@ -126,24 +126,24 @@ export function ProductList() {
       )}
 
       {isPending ? (
-        <p className="text-stone-500">Завантаження…</p>
+        <p className="text-neutral-600">Завантаження…</p>
       ) : (
-        <ul className="divide-y divide-amber-200 rounded-xl border border-amber-200 bg-white">
+        <ul className="divide-y divide-neutral-300 card elev-sm">
           {products?.map((product) => (
             <li key={product.id}>
               <Link
                 href={`/admin/products/${product.id}`}
-                className="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-amber-50"
+                className="flex flex-wrap items-center justify-between gap-3 p-4 hover:bg-accent-100"
               >
                 <div>
                   <p className="font-medium">{product.title}</p>
-                  <p className="text-sm text-stone-500">
+                  <p className="text-sm text-neutral-600">
                     /{product.slug} · залишок {product.stock} {product.unit}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="font-semibold">{formatMoney(product.basePrice)}</p>
-                  <p className="text-sm text-stone-500">
+                  <p className="text-sm text-neutral-600">
                     {product.tiers?.length
                       ? `${product.tiers.length} порогів для користувача`
                       : 'порогів немає'}

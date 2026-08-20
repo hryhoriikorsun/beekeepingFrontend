@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { ProductPurchase } from '@/components/product-purchase';
+import { PageNav, ProductPhoto } from '@/components/ui';
 import { fetchProduct, fetchProductsSafe } from '@/lib/api/server';
 
 interface Props {
@@ -43,21 +44,40 @@ export default async function ProductPage({ params }: Props) {
   }
 
   return (
-    <article className="grid gap-8 md:grid-cols-2">
-      <div>
-        <h1 className="text-3xl font-semibold tracking-tight">{product.title}</h1>
-        {product.description && <p className="mt-3 text-stone-600">{product.description}</p>}
-        <p className="mt-4 text-sm text-stone-500">
-          {product.stock > 0
-            ? `В наявності: ${product.stock} ${product.unit}`
-            : 'Наразі немає в наявності'}
-        </p>
-      </div>
+    <article>
+      <PageNav current={product.title} />
 
-      {/* Server-rendered price is the retail one, which is what a crawler and
-          a first-time visitor should see. The island below re-asks the API
-          with the visitor's token and quantity. */}
-      <ProductPurchase initial={product} />
+      <div className="split-grid">
+        <div className="relative">
+          <div className="detail-blob" />
+
+          <div className="relative z-1 mb-4">
+            <ProductPhoto title={product.title} size={96} />
+          </div>
+
+          <div className="relative z-1">
+            <div className="kicker">З власної пасіки</div>
+            <h1 className="mt-1 mb-2">{product.title}</h1>
+            {product.description && (
+              <p className="max-w-[55ch] text-neutral-700">{product.description}</p>
+            )}
+            <p className="mt-3">
+              {product.stock > 0 ? (
+                <span className="tag tag-accent-2">
+                  В наявності: {product.stock} {product.unit}
+                </span>
+              ) : (
+                <span className="tag tag-neutral">Наразі немає в наявності</span>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Server-rendered price is the retail one, which is what a crawler and
+            a first-time visitor should see. The island below re-asks the API
+            with the visitor's token and quantity. */}
+        <ProductPurchase initial={product} />
+      </div>
     </article>
   );
 }
