@@ -6,7 +6,7 @@ import { api } from '@/lib/api/client';
 import { useAuthStore } from '@/lib/auth/store';
 import { useCartStore } from '@/lib/cart/store';
 import { formatMoney } from '@/lib/format';
-import { BasketIcon } from './icons';
+import { BasketIcon, LockIcon } from './icons';
 import type { Product } from '@/lib/api/types';
 
 export function ProductPurchase({ initial }: { initial: Product }) {
@@ -35,6 +35,7 @@ export function ProductPurchase({ initial }: { initial: Product }) {
     placeholderData: (previous) => previous,
   });
 
+  const isAdmin = role === 'ADMIN';
   const outOfStock = product.stock < 1;
   const tooMany = qty > product.stock;
   // A page rendered before this field existed can still be served from the
@@ -128,24 +129,45 @@ export function ProductPurchase({ initial }: { initial: Product }) {
         {isFetching && <span className="ml-2 text-sm text-neutral-600">оновлюємо…</span>}
       </p>
 
-      <button
-        type="button"
-        disabled={outOfStock || tooMany}
-        onClick={() => {
-          addToCart({
-            productId: product.id,
-            slug: product.slug,
-            title: product.title,
-            unit: product.unit,
-            qty,
-          });
-          setAdded(true);
-        }}
-        className="btn btn-primary btn-block"
-      >
-        <BasketIcon size={16} />
-        {outOfStock ? 'Немає в наявності' : tooMany ? 'Стільки немає на складі' : 'Додати в кошик'}
-      </button>
+      {isAdmin ? (
+        // The API answers an admin's order with 403, so the button is shut
+        // here rather than at the end of a checkout the admin cannot finish.
+        <div className="locked-action has-tooltip">
+          <span className="btn btn-primary btn-block" aria-hidden="true">
+            <BasketIcon size={16} />
+            Додати в кошик
+          </span>
+          <span className="locked-action-lock">
+            <LockIcon size={18} />
+          </span>
+          <span role="tooltip" className="tooltip">
+            Адміністратор не купує товар
+          </span>
+        </div>
+      ) : (
+        <button
+          type="button"
+          disabled={outOfStock || tooMany}
+          onClick={() => {
+            addToCart({
+              productId: product.id,
+              slug: product.slug,
+              title: product.title,
+              unit: product.unit,
+              qty,
+            });
+            setAdded(true);
+          }}
+          className="btn btn-primary btn-block"
+        >
+          <BasketIcon size={16} />
+          {outOfStock
+            ? 'Немає в наявності'
+            : tooMany
+              ? 'Стільки немає на складі'
+              : 'Додати в кошик'}
+        </button>
+      )}
 
       {added && !tooMany && (
         <p className="text-center text-sm text-accent-2-700">Додано до кошика</p>

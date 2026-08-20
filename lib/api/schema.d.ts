@@ -219,7 +219,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Свої замовлення; для адміна — усі */
+        /** Свої замовлення; для адміна — усі. Пошук і сторінки */
         get: operations["OrdersController_list"];
         put?: never;
         /** Оформити замовлення. Ціни рахує сервер */
@@ -709,6 +709,39 @@ export interface components {
             createdAt: string;
             items: components["schemas"]["OrderItemViewDto"][];
         };
+        OrderCountsDto: {
+            /** @example 4 */
+            CREATED: number;
+            /** @example 1 */
+            PENDING_PAYMENT: number;
+            /** @example 7 */
+            PAID: number;
+            /** @example 2 */
+            SHIPPED: number;
+            /** @example 12 */
+            DONE: number;
+            /** @example 3 */
+            CANCELLED: number;
+        };
+        PaginatedOrdersDto: {
+            items: components["schemas"]["OrderViewDto"][];
+            /**
+             * @description Скільки замовлень підпадає під фільтр
+             * @example 137
+             */
+            total: number;
+            /** @example 1 */
+            page: number;
+            /** @example 20 */
+            limit: number;
+            /**
+             * @description Скільки всього сторінок
+             * @example 7
+             */
+            pages: number;
+            /** @description Скільки замовлень у кожному статусі за поточним пошуком, без фільтра статусу */
+            counts: components["schemas"]["OrderCountsDto"];
+        };
         UpdateOrderStatusDto: {
             /**
              * @example SHIPPED
@@ -1152,7 +1185,17 @@ export interface operations {
     };
     OrdersController_list: {
         parameters: {
-            query?: never;
+            query?: {
+                page?: number;
+                limit?: number;
+                /** @description Номер замовлення, отримувач, телефон, місто або назва товару */
+                q?: string;
+                status?: "CREATED" | "PENDING_PAYMENT" | "PAID" | "SHIPPED" | "DONE" | "CANCELLED";
+                /** @description Замовлення від цієї дати */
+                from?: string;
+                /** @description Замовлення до цієї дати, включно */
+                to?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1164,7 +1207,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OrderViewDto"][];
+                    "application/json": components["schemas"]["PaginatedOrdersDto"];
                 };
             };
         };

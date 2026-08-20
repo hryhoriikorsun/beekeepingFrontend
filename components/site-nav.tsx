@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { logout } from '@/lib/auth/actions';
 import { useAuthStore } from '@/lib/auth/store';
 import { useCartStore } from '@/lib/cart/store';
-import { BasketIcon, CloseIcon, HiveIcon, MenuIcon } from './icons';
+import { BasketIcon, CloseIcon, HiveIcon, LockIcon, MenuIcon, ShieldIcon } from './icons';
 
 const ROLE_LABEL: Record<string, string> = {
   ADMIN: 'адміністратор',
@@ -13,10 +13,26 @@ const ROLE_LABEL: Record<string, string> = {
   DEALER: 'курєр',
 };
 
+const ADMIN_HINT = 'Ця сторінка для покупців. Адміністратор не купує товар.';
+
+/// A menu row that goes nowhere: it names the destination, shows why it is
+/// shut, and stays reachable by keyboard so the reason is not hover-only.
+function LockedRow({ label, hint }: { label: string; hint: string }) {
+  return (
+    <span className="drawer-link locked-link has-tooltip" tabIndex={0} aria-disabled="true">
+      {label}
+      <LockIcon />
+      <span role="tooltip" className="tooltip">
+        {hint}
+      </span>
+    </span>
+  );
+}
+
 /**
- * Three things only: brand on the left, cart and burger on the right. The
- * cart stays out of the menu at every width - it is the one destination a
- * buyer reaches for mid-purchase; everything else lives behind the burger.
+ * Three things only: brand on the left, one destination and the burger on the
+ * right. For a buyer that destination is the cart; for an admin, who cannot
+ * buy anything, it is the admin section instead.
  */
 export function SiteHeader() {
   const { user } = useAuthStore();
@@ -33,6 +49,7 @@ export function SiteHeader() {
   }, [menuOpen]);
 
   const close = () => setMenuOpen(false);
+  const isAdmin = user?.role === 'ADMIN';
   const roleSuffix =
     user && user.role !== 'CUSTOMER' ? ` · ${ROLE_LABEL[user.role] ?? user.role}` : '';
 
@@ -46,15 +63,22 @@ export function SiteHeader() {
           Пасіка
         </Link>
 
-        <Link href="/cart" className="cart-link" aria-label="Кошик">
-          <BasketIcon size={20} />
-          <span className="cart-label">Кошик</span>
-          {count > 0 && (
-            <span key={count} className="tag tag-accent badge-pop cart-count">
-              {count}
-            </span>
-          )}
-        </Link>
+        {isAdmin ? (
+          <Link href="/admin" className="cart-link admin-link" aria-label="Адмінка">
+            <ShieldIcon size={20} />
+            <span className="cart-label">Адмінка</span>
+          </Link>
+        ) : (
+          <Link href="/cart" className="cart-link" aria-label="Кошик">
+            <BasketIcon size={20} />
+            <span className="cart-label">Кошик</span>
+            {count > 0 && (
+              <span key={count} className="tag tag-accent badge-pop cart-count">
+                {count}
+              </span>
+            )}
+          </Link>
+        )}
 
         <button
           type="button"
@@ -84,14 +108,19 @@ export function SiteHeader() {
 
             {user ? (
               <>
-                {user.role === 'ADMIN' && (
-                  <Link href="/admin" className="drawer-link" onClick={close}>
-                    Адмінка
+                {isAdmin ? (
+                  <>
+                    <Link href="/admin" className="drawer-link" onClick={close}>
+                      Адмінка
+                    </Link>
+                    <LockedRow label="Замовлення" hint={ADMIN_HINT} />
+                    <LockedRow label="Кошик" hint={ADMIN_HINT} />
+                  </>
+                ) : (
+                  <Link href="/orders" className="drawer-link" onClick={close}>
+                    Замовлення
                   </Link>
                 )}
-                <Link href="/orders" className="drawer-link" onClick={close}>
-                  Замовлення
-                </Link>
                 <div className="nav-user px-1 py-2">
                   {user.email}
                   {roleSuffix}

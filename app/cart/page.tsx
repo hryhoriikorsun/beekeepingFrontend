@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { BuyersOnly } from '@/components/buyers-only';
 import { CartView } from '@/components/cart-view';
 import { PageNav } from '@/components/ui';
 
@@ -10,14 +11,16 @@ export default function CartPage() {
     <>
       <PageNav current="Кошик" />
 
-      <div className="page-head">
-        <h1>Кошик</h1>
-        <Link href="/" className="btn btn-secondary">
-          Додати ще
-        </Link>
-      </div>
+      <BuyersOnly>
+        <div className="page-head">
+          <h1>Кошик</h1>
+          <Link href="/" className="btn btn-secondary">
+            Додати ще
+          </Link>
+        </div>
 
-      <CartView />
+        <CartView />
+      </BuyersOnly>
     </>
   );
 }

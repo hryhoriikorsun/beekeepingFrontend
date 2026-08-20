@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { ConfirmDeleteDialog } from './confirm-delete-dialog';
+import { ConfirmDialog } from './confirm-dialog';
 import { api } from '@/lib/api/client';
 import { messageOf } from '@/lib/api/errors';
 import { formatMoney } from '@/lib/format';
@@ -211,7 +211,7 @@ export function ProductEditor({ id }: { id: string }) {
           </p>
         )}
         {saved && !save.isPending && (
-          <p className="rounded bg-green-50 p-3 text-sm text-accent-2-700 sm:col-span-2">
+          <p className="alert alert-success sm:col-span-2">
             Збережено. Ціни в уже оформлених замовленнях не змінились.
           </p>
         )}
@@ -262,11 +262,13 @@ export function ProductEditor({ id }: { id: string }) {
         </button>
       </section>
 
-      <ConfirmDeleteDialog
+      <ConfirmDialog
         open={confirming}
         expected={product.title}
         title="Видалити товар?"
         description="Цю дію не можна скасувати."
+        confirmLabel="Видалити"
+        pendingLabel="Видаляємо…"
         pending={remove.isPending}
         error={remove.error ? (remove.error as Error).message : null}
         onCancel={() => {

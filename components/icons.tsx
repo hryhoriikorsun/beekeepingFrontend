@@ -72,3 +72,38 @@ export function CloseIcon({ size = 22, className }: IconProps) {
     </svg>
   );
 }
+
+export function LockIcon({ size = 14, className }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <rect x="4" y="10" width="16" height="11" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+/// Solid, unlike the rest: the admin entry is a mode switch, not a link
+/// among links, and the fill is what sets it apart in the header.
+export function ShieldIcon({ size = 20, className }: IconProps) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden
+      focusable="false"
+      className={className}
+    >
+      <path d="M12 2.2 4.5 5.3v6c0 4.6 3.2 8.9 7.5 10.5 4.3-1.6 7.5-5.9 7.5-10.5v-6L12 2.2Z" />
+      <path
+        d="m8.8 11.8 2.2 2.2 4.2-4.2"
+        fill="none"
+        stroke="#f5ead8"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

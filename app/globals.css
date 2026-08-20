@@ -438,6 +438,10 @@
     background: var(--color-danger-bg);
     color: var(--color-danger);
   }
+  .alert-success {
+    background: var(--color-accent-2-100);
+    color: var(--color-accent-2-700);
+  }
   .alert-info {
     background: var(--color-accent-100);
     color: var(--color-accent-900);
@@ -515,6 +519,15 @@
   .cart-count {
     padding: 2px 9px;
   }
+  /* The admin's slot in the header is a mode, not a purchase: sage, not
+     terracotta, so it never reads as a call to buy. */
+  .admin-link {
+    color: var(--color-accent-2-700);
+  }
+  .admin-link:hover {
+    background: var(--color-accent-2-100);
+    color: var(--color-accent-2-700);
+  }
   @media (max-width: 360px) {
     .cart-label {
       /* Only on the narrowest phones does the icon carry it alone. */
@@ -537,6 +550,148 @@
   }
   .burger-btn:hover {
     background: var(--color-accent-100);
+  }
+
+  /* ---------- admin orders board ---------- */
+  .filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .filter-chip {
+    padding: 6px 14px;
+    border: 1px solid var(--color-neutral-300);
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-neutral-700);
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-1) var(--ease-organic),
+      border-color var(--dur-1) var(--ease-organic),
+      color var(--dur-1) var(--ease-organic);
+  }
+  .filter-chip:hover {
+    border-color: var(--color-accent-500);
+    color: var(--color-accent-700);
+  }
+  .filter-chip-on {
+    background: var(--color-accent-600);
+    border-color: var(--color-accent-600);
+    color: #fff;
+  }
+
+  .admin-order {
+    border-bottom: 1px solid var(--color-neutral-200);
+  }
+  .admin-order:last-child {
+    border-bottom: none;
+  }
+  .admin-order-head {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+    padding: var(--space-3) 0;
+    cursor: pointer;
+    list-style: none;
+  }
+  /* The row is the disclosure control; the default triangle would fight the
+     icon badge for the same corner. */
+  .admin-order-head::-webkit-details-marker {
+    display: none;
+  }
+  .admin-order-head:hover {
+    color: var(--color-accent-700);
+  }
+  /* A chevron of our own, so the row still says "I open". */
+  .admin-order-head::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    margin-left: var(--space-1);
+    border-right: 2px solid currentcolor;
+    border-bottom: 2px solid currentcolor;
+    opacity: 0.5;
+    transform: rotate(45deg) translate(-2px, -2px);
+    transition: transform var(--dur-2) var(--ease-organic);
+  }
+  .admin-order details[open] .admin-order-head::after {
+    transform: rotate(-135deg) translate(-2px, -2px);
+  }
+  .admin-order-body {
+    padding: 0 0 var(--space-4) calc(40px + var(--space-4));
+  }
+  @media (max-width: 480px) {
+    .admin-order-body {
+      padding-left: 0;
+    }
+  }
+
+  /* ---------- locked destinations ---------- */
+  .drawer-link.locked-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-neutral-600);
+    cursor: not-allowed;
+  }
+  .drawer-link.locked-link:hover {
+    color: var(--color-neutral-600);
+    text-decoration: none;
+  }
+
+  .has-tooltip {
+    position: relative;
+  }
+  .tooltip {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    z-index: 60;
+    width: max-content;
+    max-width: 240px;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    background: var(--color-neutral-900);
+    color: var(--color-bg);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.35;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--dur-1) var(--ease-organic);
+  }
+  .tooltip-above {
+    top: auto;
+    bottom: calc(100% + 6px);
+  }
+  .has-tooltip:hover > .tooltip,
+  .has-tooltip:focus-visible > .tooltip,
+  .has-tooltip:focus-within > .tooltip {
+    opacity: 1;
+  }
+
+  /* A blurred button with a lock on top: the action is visibly there and
+     visibly out of reach, which reads faster than a greyed-out label. */
+  .locked-action {
+    display: block;
+  }
+  .locked-action > .btn {
+    filter: blur(2.5px) saturate(0.75);
+    pointer-events: none;
+    user-select: none;
+  }
+  .locked-action-lock {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    pointer-events: none;
   }
 
   .drawer-backdrop {

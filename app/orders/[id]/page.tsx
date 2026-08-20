@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { BuyersOnly } from '@/components/buyers-only';
 import { OrderDetail } from '@/components/order-detail';
 import { RequireAuth } from '@/components/require-auth';
 import { PageNav } from '@/components/ui';
@@ -10,7 +11,9 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
   return (
     <RequireAuth>
       <PageNav current="Замовлення" />
-      <OrderDetail id={id} />
+      <BuyersOnly>
+        <OrderDetail id={id} />
+      </BuyersOnly>
     </RequireAuth>
   );
 }

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const API = process.env.E2E_API_URL ?? 'http://localhost:3000';
 const PASSWORD = 'password123';
 const slug = () => `test-med-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
@@ -115,6 +116,91 @@ test.describe('Адмін', () => {
     // Gone from the shop as well, not merely from the admin list.
     await page.goto(`/products/${productSlug}`);
     await expect(page.getByText('404')).toBeVisible();
+  });
+
+  test('веде дошку замовлень і рухає статус', async ({ page, request }) => {
+    // A real order from a real buyer: the board is worth nothing if it only
+    // works on rows the test drew itself.
+    const buyer = `board-${Date.now()}@test.local`;
+    const registration = await request.post(`${API}/auth/register`, {
+      data: { email: buyer, password: PASSWORD },
+    });
+    const { accessToken } = await registration.json();
+
+    const catalogue = await request.get(`${API}/products`);
+    const [product] = await catalogue.json();
+
+    const placed = await request.post(`${API}/orders`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      data: {
+        items: [{ productId: product.id, qty: 1 }],
+        customerName: 'Дошка Тестова',
+        customerPhone: '+380671234567',
+        city: 'Київ',
+        warehouse: 'Відділення №1',
+        paymentMethod: 'COD',
+      },
+    });
+    const order = await placed.json();
+
+    await loginAs(page, 'admin@beekeeping.local');
+    await page.goto('/admin/orders');
+
+    const row = page.locator('details').filter({ hasText: `Замовлення №${order.number}` });
+    await row.getByText(`Замовлення №${order.number}`).click();
+    await expect(row.getByText('Дошка Тестова')).toBeVisible();
+
+    // Every move asks first, and each question names its own consequence.
+    await row.getByRole('button', { name: 'Оплачено' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('потрапить у виторг статистики');
+    await dialog.getByRole('button', { name: 'Позначити оплаченим' }).click();
+
+    // CREATED -> PAID is allowed; the row then offers only what PAID allows.
+    await expect(row.getByRole('button', { name: 'Відправлено' })).toBeVisible();
+    await expect(row.getByRole('button', { name: 'Очікує оплати' })).toHaveCount(0);
+
+    // A terminal move asks first, and taking the question back changes nothing.
+    await row.getByRole('button', { name: 'Скасовано' }).click();
+    await expect(dialog).toContainText('Скасування незворотне');
+    await dialog.getByRole('button', { name: 'Відмінити' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(row.getByRole('button', { name: 'Відправлено' })).toBeVisible();
+
+    // Going through with it is final: nothing leads out of CANCELLED.
+    await row.getByRole('button', { name: 'Скасовано' }).click();
+    await dialog.getByRole('button', { name: 'Скасувати замовлення' }).click();
+    await expect(row.getByText('Кінцевий статус — далі рухати нікуди.')).toBeVisible();
+
+    const filters = page.getByRole('group', { name: 'Фільтр за статусом' });
+    await filters.getByRole('button', { name: /Виконано/ }).click();
+    await expect(row).toHaveCount(0);
+  });
+
+  test('не може купувати: кошик і замовлення для нього закриті', async ({ page }) => {
+    await loginAs(page, 'admin@beekeeping.local');
+
+    // The header slot that carries the cart for a buyer carries the admin
+    // section instead - there is nothing for an admin to put in a cart.
+    const header = page.getByRole('banner');
+    await expect(header.getByRole('link', { name: 'Адмінка' })).toBeVisible();
+    await expect(header.getByRole('link', { name: 'Кошик' })).toHaveCount(0);
+
+    await page.goto('/products/med-lypovyi');
+    await expect(page.getByRole('button', { name: 'Додати в кошик' })).toHaveCount(0);
+    await expect(page.getByRole('tooltip')).toHaveText('Адміністратор не купує товар');
+
+    // The API refuses an admin's order anyway; these pages say so up front
+    // instead of showing the whole shop's orders as "мої".
+    await page.goto('/orders');
+    await expect(page.getByRole('heading', { name: 'Мої замовлення' })).toHaveCount(0);
+    await expect(
+      page.getByText('Ця сторінка для покупців. Адміністратор не купує товар.'),
+    ).toBeVisible();
+
+    await page.goto('/cart');
+    await expect(page.getByRole('heading', { name: 'Кошик' })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'До адмінки' })).toBeVisible();
   });
 
   test('не пускає користувача до адмінки', async ({ page }) => {
