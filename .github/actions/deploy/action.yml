@@ -1,0 +1,81 @@
+name: Deploy over SSH
+description: >
+  Ship the compose file, pull the pinned image and bring the storefront up,
+  then refuse to report success until the site answers over its own hostname.
+
+inputs:
+  host:
+    required: true
+  user:
+    required: true
+  key:
+    required: true
+  env-file:
+    description: Which env file on the server to use (.env.web.prod or .env.web.stage)
+    required: true
+  image:
+    description: Fully pinned image reference, by digest-bearing sha tag
+    required: true
+  web-host:
+    description: Public hostname to check after the deploy
+    required: true
+  registry-token:
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Open an SSH channel
+      shell: bash
+      run: |
+        install -d -m 700 ~/.ssh
+        printf '%s\n' "${{ inputs.key }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        ssh-keyscan -H "${{ inputs.host }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+    - name: Copy the compose files
+      shell: bash
+      run: |
+        scp -i ~/.ssh/id_ed25519 docker-compose.edge.yml docker-compose.prod.yml \
+          "${{ inputs.user }}@${{ inputs.host }}:/opt/beekeeping/"
+
+    - name: Pull and restart
+      shell: bash
+      env:
+        REGISTRY_TOKEN: ${{ inputs.registry-token }}
+      run: |
+        ssh -i ~/.ssh/id_ed25519 "${{ inputs.user }}@${{ inputs.host }}" \
+          "IMAGE='${{ inputs.image }}' ENV_FILE='${{ inputs.env-file }}' REGISTRY_TOKEN='$REGISTRY_TOKEN' bash -s" <<'REMOTE'
+        set -euo pipefail
+        cd /opt/beekeeping
+
+        echo "$REGISTRY_TOKEN" | docker login ghcr.io -u x --password-stdin
+
+        # Traefik and the `edge` network belong to the API repository. The
+        # storefront only joins them, so a missing network means the API has
+        # not been deployed to this machine yet - fail loudly rather than
+        # start something unreachable.
+        docker network inspect edge > /dev/null
+
+        # IMAGE from the shell overrides the value in the env file, so the
+        # deployed tag is the exact commit that passed the pipeline.
+        export IMAGE
+        docker compose --env-file "$ENV_FILE" -f docker-compose.web.yml pull
+        docker compose --env-file "$ENV_FILE" -f docker-compose.web.yml up -d --remove-orphans
+        docker image prune -f
+        REMOTE
+
+    - name: Wait for the deployed instance to answer
+      shell: bash
+      run: |
+        for attempt in $(seq 1 30); do
+          # Staging sits behind basic auth, so 401 also means it is serving.
+          code=$(curl -s -o /dev/null -w '%{http_code}' "https://${{ inputs.web-host }}/")
+          if [ "$code" = "200" ] || [ "$code" = "401" ]; then
+            echo "healthy after ${attempt} attempt(s)"
+            exit 0
+          fi
+          sleep 5
+        done
+        echo "::error::the site never came up - the stack is running the old or a broken image"
+        exit 1

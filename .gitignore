@@ -43,3 +43,10 @@ next-env.d.ts
 # playwright
 /test-results/
 /playwright-report/
+
+# Templates belong in the repository; the filled-in files live only on the
+# server. The blanket `.env*` above hides both, so the examples are let back
+# in explicitly.
+!.env.example
+!.env.web.prod.example
+!.env.web.stage.example

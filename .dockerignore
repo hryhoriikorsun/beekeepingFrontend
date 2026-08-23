@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.github
+e2e
+test-results
+playwright-report
+playwright.config.ts
+*.md
+Dockerfile
+docker-compose*.yml
+# Never bake local environment into an image: .env.local points the client at
+# localhost, which is not where the shop lives.
+.env*

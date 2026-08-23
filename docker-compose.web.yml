@@ -1,0 +1,35 @@
+# The storefront, on the same machine as the API and behind the same Traefik.
+#
+#   docker compose --env-file .env.web.prod  -f docker-compose.web.yml up -d
+#   docker compose --env-file .env.web.stage -f docker-compose.web.yml up -d
+#
+# The `edge` network comes from the backend repository's docker-compose.edge.yml
+# and must already be up.
+
+services:
+  web:
+    image: ${IMAGE}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=edge
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${WEB_HOST}`)
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=le
+      - traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${WEB_MIDDLEWARES}
+      - traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000
+      # Middleware names carry the project, or the two environments would each
+      # define one `noindex` and Traefik would keep whichever it saw last.
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-noindex.headers.customresponseheaders.X-Robots-Tag=noindex,nofollow
+      # Basic auth for staging. Generate with:
+      #   docker run --rm httpd:alpine htpasswd -nbB user 'pass' | sed -e s/\$/\$\$/g
+      - traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.users=${STAGE_BASICAUTH:-}
+    networks: [edge]
+
+networks:
+  edge:
+    name: edge
+    external: true

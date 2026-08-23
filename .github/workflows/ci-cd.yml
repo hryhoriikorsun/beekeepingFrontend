@@ -1,0 +1,95 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  check:
+    name: Typecheck, lint and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npx eslint .
+
+      # The catalogue is fetched at build time and tolerates an unreachable
+      # API, so this proves the build itself, not the API being up.
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.invalid
+
+  deploy-stage:
+    name: Deploy to staging
+    needs: check
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    environment: staging
+
+    steps:
+      - uses: actions/checkout@v4
+      - id: build
+        uses: ./.github/actions/build-image
+        with:
+          api-url: ${{ vars.NEXT_PUBLIC_API_URL }}
+          suffix: stage
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ./.github/actions/deploy
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          user: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          env-file: .env.web.stage
+          image: ${{ steps.build.outputs.image }}
+          web-host: ${{ vars.WEB_HOST }}
+          registry-token: ${{ secrets.GITHUB_TOKEN }}
+
+  deploy-prod:
+    name: Deploy to production
+    needs: deploy-stage
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    # Protect this environment with a required reviewer in GitHub settings:
+    # production then waits for a human instead of following staging blindly.
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+      # A separate image on purpose: the API address is baked into the client
+      # bundle, so the staging build can never be promoted as-is.
+      - id: build
+        uses: ./.github/actions/build-image
+        with:
+          api-url: ${{ vars.NEXT_PUBLIC_API_URL }}
+          suffix: prod
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ./.github/actions/deploy
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          user: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          env-file: .env.web.prod
+          image: ${{ steps.build.outputs.image }}
+          web-host: ${{ vars.WEB_HOST }}
+          registry-token: ${{ secrets.GITHUB_TOKEN }}

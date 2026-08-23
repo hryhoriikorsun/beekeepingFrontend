@@ -1,0 +1,56 @@
+name: Build and push the storefront image
+description: >
+  Builds one image for one environment. NEXT_PUBLIC_* values are inlined into
+  the browser bundle at build time, so the API address is a build argument and
+  each environment gets its own image from the same commit.
+
+inputs:
+  api-url:
+    description: Public API address this build will talk to
+    required: true
+  suffix:
+    description: Environment marker appended to the image tag (stage, prod)
+    required: true
+  token:
+    required: true
+
+outputs:
+  image:
+    description: Fully pinned image reference
+    value: ${{ steps.meta.outputs.image }}:sha-${{ github.sha }}-${{ inputs.suffix }}
+
+runs:
+  using: composite
+  steps:
+    - name: Refuse to build without an API address
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.api-url }}" ]; then
+          echo "::error::NEXT_PUBLIC_API_URL is not set for this environment."
+          echo "::error::Set it as an environment variable in GitHub settings."
+          exit 1
+        fi
+
+    - id: meta
+      shell: bash
+      run: echo "image=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
+    - uses: docker/setup-buildx-action@v3
+
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.token }}
+
+    - uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        build-args: |
+          NEXT_PUBLIC_API_URL=${{ inputs.api-url }}
+        tags: |
+          ${{ steps.meta.outputs.image }}:sha-${{ github.sha }}-${{ inputs.suffix }}
+          ${{ steps.meta.outputs.image }}:${{ inputs.suffix }}
+        cache-from: type=gha,scope=${{ inputs.suffix }}
+        cache-to: type=gha,mode=max,scope=${{ inputs.suffix }}
