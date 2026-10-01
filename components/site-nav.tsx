@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { logout } from '@/lib/auth/actions';
 import { useAuthStore } from '@/lib/auth/store';
 import { useCartStore } from '@/lib/cart/store';
@@ -14,6 +14,15 @@ const ROLE_LABEL: Record<string, string> = {
 };
 
 const ADMIN_HINT = 'Ця сторінка для покупців. Адміністратор не купує товар.';
+
+function subscribeToScroll(onChange: () => void) {
+  window.addEventListener('scroll', onChange, { passive: true });
+  return () => window.removeEventListener('scroll', onChange);
+}
+
+/// A boolean snapshot, so scrolling re-renders the header only when the
+/// page crosses the top, not on every scroll event.
+const isScrolled = () => window.scrollY > 0;
 
 /// A menu row that goes nowhere: it names the destination, shows why it is
 /// shut, and stays reachable by keyboard so the reason is not hover-only.
@@ -38,6 +47,7 @@ export function SiteHeader() {
   const { user } = useAuthStore();
   const count = useCartStore((s) => s.lines.reduce((sum, l) => sum + l.qty, 0));
   const [menuOpen, setMenuOpen] = useState(false);
+  const stuck = useSyncExternalStore(subscribeToScroll, isScrolled, () => false);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -54,7 +64,7 @@ export function SiteHeader() {
     user && user.role !== 'CUSTOMER' ? ` · ${ROLE_LABEL[user.role] ?? user.role}` : '';
 
   return (
-    <header className="site-header">
+    <header className="site-header" data-stuck={stuck || undefined}>
       <div className="nav">
         <Link href="/" className="nav-brand">
           <span className="brand-badge">

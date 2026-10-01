@@ -452,9 +452,31 @@
     position: sticky;
     top: 0;
     z-index: 10;
+  }
+  /* The tint and the blur live on a layer of their own: backdrop-filter on
+     the header itself would make it the containing block for the drawer,
+     and the fixed menu would shrink to the header's 70px.
+     Unprefixed only, here and below: given both spellings, Lightning CSS
+     keeps just the -webkit- one, which Chromium ignores; given this one, it
+     adds the -webkit- copy for Safari itself. */
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
     background: color-mix(in srgb, var(--color-bg) 72%, transparent);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px) saturate(1.2);
+    transition:
+      background-color var(--dur-2) var(--ease-organic),
+      box-shadow var(--dur-2) var(--ease-organic);
+  }
+  /* Once the page runs underneath, the bar firms up and draws its own edge,
+     so content reads as passing under it rather than through it. */
+  .site-header[data-stuck]::before {
+    background: color-mix(in srgb, var(--color-bg) 90%, transparent);
+    box-shadow:
+      0 1px 0 rgb(46 43 37 / 0.08),
+      0 8px 24px rgb(46 43 37 / 0.08);
   }
   .nav {
     display: flex;
