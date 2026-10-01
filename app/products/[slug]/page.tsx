@@ -52,7 +52,13 @@ export default async function ProductPage({ params }: Props) {
           <div className="detail-blob" />
 
           <div className="relative z-1 mb-4">
-            <ProductPhoto title={product.title} size={96} />
+            <ProductPhoto
+              title={product.title}
+              src={product.imageUrl}
+              sizes="(max-width: 581px) 100vw, (max-width: 1080px) 50vw, 510px"
+              eager
+              size={96}
+            />
           </div>
 
           <div className="relative z-1">

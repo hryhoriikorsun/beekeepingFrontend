@@ -27,10 +27,17 @@ export default async function CataloguePage() {
         </div>
       ) : (
         <ul className="pasika-grid">
-          {products.map((product) => (
+          {products.map((product, index) => (
             <li key={product.id} className="flex">
               <Link href={`/products/${product.slug}`} className="card elev-sm product-card">
-                <ProductPhoto title={product.title} />
+                {/* sizes follows .pasika-grid: one column on a phone, two on
+                    a tablet, three of ~340px at the 1080px page width. */}
+                <ProductPhoto
+                  title={product.title}
+                  src={product.imageUrl}
+                  sizes="(max-width: 572px) 100vw, (max-width: 850px) 50vw, 340px"
+                  eager={index < 3}
+                />
 
                 <div className="kicker">З власної пасіки</div>
                 <h2 className="card-title">{product.title}</h2>

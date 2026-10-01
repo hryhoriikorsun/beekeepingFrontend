@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { api } from '@/lib/api/client';
 import { messageOf } from '@/lib/api/errors';
 import { formatMoney } from '@/lib/format';
+import { ImagePicker } from './image-picker';
 
 /// Ukrainian titles do not transliterate themselves, so the slug is typed by
 /// hand - it is a URL that search engines will remember.
@@ -31,6 +32,7 @@ export function ProductList() {
           slug: String(form.get('slug')),
           description: String(form.get('description') ?? '') || undefined,
           unit: String(form.get('unit') ?? 'л'),
+          imageUrl: String(form.get('imageUrl') ?? '') || undefined,
           basePrice: Number(form.get('basePrice')),
           stock: Number(form.get('stock') ?? 0),
         },
@@ -112,6 +114,8 @@ export function ProductList() {
               />
             </label>
           </div>
+
+          <ImagePicker name="imageUrl" />
 
           {error && <p className="alert alert-danger sm:col-span-2">{error}</p>}
 

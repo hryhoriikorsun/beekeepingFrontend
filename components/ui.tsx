@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowLeftIcon, HiveIcon } from './icons';
 
@@ -19,12 +20,42 @@ export function PageNav({ current }: { current: string }) {
   );
 }
 
-/// The API has no images yet. The frame keeps the 4:3 slot the design asks
-/// for, so real photos drop in later without touching any layout.
-export function ProductPhoto({ title, size = 64 }: { title: string; size?: number }) {
+/// The frame keeps the 4:3 slot the design asks for whether or not the
+/// product has a photo, so adding or removing one never moves the layout.
+export function ProductPhoto({
+  title,
+  src,
+  sizes,
+  eager = false,
+  size = 64,
+}: {
+  title: string;
+  src?: string | null;
+  /// How wide the frame is drawn, so a phone is not sent the 1200px file.
+  sizes: string;
+  /// Above the fold the photo is what the visitor waits for; lazy loading
+  /// would only hold it back.
+  eager?: boolean;
+  size?: number;
+}) {
+  if (!src) {
+    return (
+      <div className="photo-frame washed" role="img" aria-label={`Фото: ${title}`}>
+        <HiveIcon size={size} />
+      </div>
+    );
+  }
+
   return (
-    <div className="photo-frame washed" role="img" aria-label={`Фото: ${title}`}>
-      <HiveIcon size={size} />
+    <div className="photo-frame washed">
+      <Image
+        src={src}
+        alt={`Фото: ${title}`}
+        fill
+        sizes={sizes}
+        loading={eager ? 'eager' : 'lazy'}
+        fetchPriority={eager ? 'high' : 'auto'}
+      />
     </div>
   );
 }

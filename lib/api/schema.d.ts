@@ -549,6 +549,11 @@ export interface components {
             description?: string | null;
             /** @example л */
             unit: string;
+            /**
+             * @description Шлях до фото на сайті магазину
+             * @example /images/products/med-lypovyi.webp
+             */
+            imageUrl: string | null;
             /** @example 120 */
             stock: number;
             /**
@@ -589,6 +594,11 @@ export interface components {
              */
             unit?: string;
             /**
+             * @description Шлях до фото на сайті магазину. null прибирає фото
+             * @example /images/products/med-lypovyi.webp
+             */
+            imageUrl?: string | null;
+            /**
              * @description Роздрібна ціна за одиницю, грн
              * @example 200
              */
@@ -609,6 +619,11 @@ export interface components {
              * @example л
              */
             unit?: string;
+            /**
+             * @description Шлях до фото на сайті магазину. null прибирає фото
+             * @example /images/products/med-lypovyi.webp
+             */
+            imageUrl?: string | null;
             /**
              * @description Роздрібна ціна за одиницю, грн
              * @example 200

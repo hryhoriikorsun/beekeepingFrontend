@@ -118,6 +118,42 @@ test.describe('Адмін', () => {
     await expect(page.getByText('404')).toBeVisible();
   });
 
+  test('обирає товару фото й прибирає його', async ({ page }) => {
+    const productSlug = slug();
+    const title = `Мед ${productSlug}`;
+
+    await loginAs(page, 'admin@beekeeping.local');
+    await page.goto('/admin/products');
+    await page.getByRole('button', { name: 'Додати товар' }).click();
+    await page.getByLabel('Назва').fill(title);
+    await page.getByLabel('Slug (адреса сторінки)').fill(productSlug);
+    await page.getByLabel('Ціна, грн').fill('250');
+    // The radios are visually hidden; a person clicks the tile, and so does the test.
+    await page.getByText('Мед гречаний', { exact: true }).click();
+    await page.getByRole('button', { name: 'Створити' }).click();
+    await expect(page.getByRole('link', { name: new RegExp(productSlug) })).toBeVisible();
+
+    // A decoded image, not just a tag: the optimiser must really serve the file.
+    await page.goto(`/products/${productSlug}`);
+    const photo = page.getByRole('img', { name: `Фото: ${title}` });
+    await expect(photo).toHaveAttribute('src', /med-hrechanyi\.webp/);
+    await expect
+      .poll(() => photo.evaluate((img: HTMLImageElement) => img.naturalWidth))
+      .toBeGreaterThan(0);
+
+    // Checked against the admin, not the shop: the shop page is cached for a
+    // minute, and that is by design.
+    await page.goto('/admin/products');
+    await page.getByRole('link', { name: new RegExp(productSlug) }).click();
+    await expect(page.getByLabel('Мед гречаний')).toBeChecked();
+    await page.getByText('Без фото', { exact: true }).click();
+    await page.getByRole('button', { name: 'Зберегти' }).click();
+    await expect(page.getByText('Збережено.')).toBeVisible();
+
+    await page.reload();
+    await expect(page.getByLabel('Без фото')).toBeChecked();
+  });
+
   test('веде дошку замовлень і рухає статус', async ({ page, request }) => {
     // A real order from a real buyer: the board is worth nothing if it only
     // works on rows the test drew itself.

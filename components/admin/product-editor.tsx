@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ConfirmDialog } from './confirm-dialog';
+import { ImagePicker } from './image-picker';
 import { api } from '@/lib/api/client';
 import { messageOf } from '@/lib/api/errors';
 import { formatMoney } from '@/lib/format';
@@ -49,6 +50,7 @@ export function ProductEditor({ id }: { id: string }) {
         slug: string;
         description: string | null;
         unit: string;
+        imageUrl: string | null;
         stock: number;
         basePrice: string;
         isActive: boolean;
@@ -66,6 +68,8 @@ export function ProductEditor({ id }: { id: string }) {
           slug: String(form.get('slug')),
           description: String(form.get('description') ?? '') || undefined,
           unit: String(form.get('unit')),
+          // null, not undefined: choosing "no photo" has to take the old one off.
+          imageUrl: String(form.get('imageUrl') ?? '') || null,
           basePrice: Number(form.get('basePrice')),
           stock: Number(form.get('stock')),
           isActive: form.get('isActive') === 'on',
@@ -199,6 +203,8 @@ export function ProductEditor({ id }: { id: string }) {
             />
           </label>
         </div>
+
+        <ImagePicker name="imageUrl" defaultValue={product.imageUrl} />
 
         <label className="flex items-center gap-2 text-sm sm:col-span-2">
           <input type="checkbox" name="isActive" defaultChecked={product.isActive} />
