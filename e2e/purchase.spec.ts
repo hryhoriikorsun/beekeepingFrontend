@@ -15,7 +15,7 @@ const unique = () => `buyer-${Date.now()}-${Math.floor(Math.random() * 1000)}@te
 test.describe('Шлях покупця', () => {
   test('незнайома людина знаходить товар і оформлює замовлення', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: 'Мед з власної пасіки' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Літо в кожній ложці' })).toBeVisible();
 
     await page.getByRole('heading', { name: 'Мед липовий' }).click();
     await expect(page).toHaveURL(/\/products\/med-lypovyi$/);

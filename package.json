@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "api:types": "openapi-typescript http://localhost:3000/docs-json -o lib/api/schema.d.ts",
+    "video:hero": "node scripts/encode-hero-videos.mjs",
     "e2e": "playwright test"
   },
   "dependencies": {

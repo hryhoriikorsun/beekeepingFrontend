@@ -54,6 +54,62 @@ export function ArrowLeftIcon({ size = 16, className }: IconProps) {
   );
 }
 
+export function ArrowRightIcon({ size = 14, className }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
+  );
+}
+
+export function ArrowDownIcon({ size = 18, className }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M12 5v14" />
+      <path d="m19 12-7 7-7-7" />
+    </svg>
+  );
+}
+
+export function PauseIcon({ size = 18, className }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M8 5v14" />
+      <path d="M16 5v14" />
+    </svg>
+  );
+}
+
+export function PlayIcon({ size = 18, className }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M7 4.5v15l12-7.5Z" />
+    </svg>
+  );
+}
+
+export function TruckIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" />
+      <path d="M15 18H9" />
+      <path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14" />
+      <circle cx="17" cy="18" r="2" />
+      <circle cx="7" cy="18" r="2" />
+    </svg>
+  );
+}
+
+export function TagIcon({ size = 16, className }: IconProps) {
+  return (
+    <svg {...base(size)} className={className}>
+      <path d="M12.6 2.6A2 2 0 0 0 11.2 2H4a2 2 0 0 0-2 2v7.2a2 2 0 0 0 .6 1.4l8.7 8.7a2.4 2.4 0 0 0 3.4 0l6.6-6.6a2.4 2.4 0 0 0 0-3.4Z" />
+      <circle cx="7.5" cy="7.5" r="0.5" fill="currentColor" />
+    </svg>
+  );
+}
+
 export function MenuIcon({ size = 24, className }: IconProps) {
   return (
     <svg {...base(size)} className={className}>

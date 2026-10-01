@@ -50,6 +50,9 @@
   --shadow-sm: 0 1px 2px rgb(46 43 37 / 0.14);
   --shadow-md: 0 3px 10px rgb(46 43 37 / 0.16);
   --shadow-lg: 0 12px 32px rgb(46 43 37 / 0.22);
+  /* Tinted with accent-700: what a card casts when it rises, as if lit by
+     the honey in it rather than by a grey studio lamp. */
+  --shadow-honey: 0 12px 28px rgb(140 73 26 / 0.2), 0 2px 6px rgb(140 73 26 / 0.1);
 
   /* Motion: one easing, four durations. Nothing longer than --dur-4. */
   --ease-organic: cubic-bezier(0.2, 0.9, 0.25, 1);
@@ -60,6 +63,11 @@
 }
 
 @layer base {
+  :root {
+    /* What .nav adds up to: 44px tap targets plus its block padding. */
+    --header-h: calc(44px + 2 * var(--space-3));
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }
@@ -173,7 +181,6 @@
 
   @media (max-width: 480px) {
     .card,
-    .hero-band,
     .login-side {
       padding: var(--space-4);
     }
@@ -780,19 +787,219 @@
     text-decoration: none;
   }
 
-  /* ---------- hero and decor ---------- */
-  .hero-band {
+  /* ---------- home hero ---------- */
+  /* Breaks out of the 1080px column and sits flush under the header, but
+     stops --hero-peek short of the fold: the catalogue heading showing below
+     it is what tells the visitor the page goes on. */
+  .home-hero {
+    --hero-peek: 104px;
+    --hero-ink: rgb(24 16 8);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    /* A minimum, not a height: where the screen is shorter than the copy
+       (a phone held sideways) the band grows to fit rather than cut it. */
+    min-height: calc(100svh - var(--header-h) - var(--hero-peek));
+    /* 100vw counts a desktop scrollbar as well, so the band overshoots each
+       edge by half of one; body clips that, and the centre stays put. */
+    margin: calc(-1 * var(--space-6)) calc(50% - 50vw) var(--space-6);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    background: var(--hero-ink);
+    color: var(--color-bg);
+  }
+  .hero-media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+  /* Darkest where the copy sits, clear where the picture is. */
+  .hero-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background:
+      linear-gradient(to top, rgb(24 16 8 / 0.82), rgb(24 16 8 / 0.3) 45%, transparent 72%),
+      linear-gradient(to right, rgb(24 16 8 / 0.55), transparent 62%);
+  }
+  .hero-clip {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transform: scale(1.04);
+  }
+  /* DEVIATION: the crossfade runs past --dur-4. It answers no click, and
+     between two moving shots half a second reads as a cut. */
+  .hero-clip.is-active {
+    z-index: 1;
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity var(--hero-fade) ease-in-out,
+      transform calc(var(--hero-fade) * 2) var(--ease-organic);
+  }
+  /* The outgoing clip stays opaque beneath the incoming one; fading both at
+     once would let the dark backing show through half-way. */
+  .hero-clip.is-leaving {
+    opacity: 1;
+    transform: none;
+  }
+
+  .hero-inner {
+    position: relative;
+    width: 100%;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-4) clamp(var(--space-6), 6svh, 56px);
+  }
+  .hero-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    max-width: 42rem;
+  }
+  .hero-title {
+    margin: 0;
+    color: var(--color-bg);
+    font-size: clamp(40px, min(7.4vw, 11svh), 84px);
+    line-height: 1.02;
+    letter-spacing: -0.025em;
+    text-wrap: balance;
+    text-shadow: 0 2px 28px rgb(24 16 8 / 0.4);
+  }
+  .hero-lead {
+    margin: 0;
+    max-width: 36ch;
+    font-size: clamp(16px, 1.7vw, 19px);
+    line-height: 1.5;
+    opacity: 0.92;
+  }
+  .hero-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: var(--space-1) 0 var(--space-3);
+    padding: 0;
+    list-style: none;
+  }
+  .hero-facts li {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 13px;
+    border: 1px solid rgb(245 234 216 / 0.24);
+    border-radius: var(--radius-pill);
+    background: rgb(245 234 216 / 0.12);
+    backdrop-filter: blur(10px);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .hero-cta {
+    min-height: 52px;
+    padding-inline: var(--space-6);
+    font-size: 16px;
+    box-shadow: var(--shadow-lg);
+  }
+  .hero-cta-arrow {
+    animation: hero-nudge 2s var(--ease-organic) infinite;
+  }
+
+  /* Pinned to the button's row, so the copy keeps the full width above. */
+  .hero-controls {
+    position: absolute;
+    right: var(--space-4);
+    bottom: clamp(var(--space-6), 6svh, 56px);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    height: 52px;
+  }
+  .hero-dots {
+    display: flex;
+    gap: 6px;
+  }
+  .hero-dot {
     position: relative;
     overflow: hidden;
-    border-radius: var(--radius-lg);
-    background: var(--color-accent-2-700);
-    color: var(--color-bg);
-    padding: var(--space-8) var(--space-6);
-    margin-bottom: var(--space-6);
+    width: 8px;
+    height: 4px;
+    border-radius: var(--radius-pill);
+    background: rgb(245 234 216 / 0.35);
+    transition: width var(--dur-3) var(--ease-organic);
   }
-  .hero-band h1 {
-    color: var(--color-bg);
+  .hero-dot.is-active {
+    width: 32px;
   }
+  /* timeupdate lands about four times a second; the transition fills in
+     between, so the bar runs instead of ticking. */
+  .hero-dot.is-active::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--color-bg);
+    transform-origin: left;
+    transform: scaleX(var(--progress, 0));
+    transition: transform 250ms linear;
+  }
+  .hero-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgb(245 234 216 / 0.28);
+    border-radius: var(--radius-pill);
+    background: rgb(245 234 216 / 0.12);
+    backdrop-filter: blur(10px);
+    color: var(--color-bg);
+    cursor: pointer;
+    transition: background-color var(--dur-1) var(--ease-organic);
+  }
+  .hero-toggle:hover {
+    background: rgb(245 234 216 / 0.26);
+  }
+  .hero-toggle:focus-visible {
+    outline-color: var(--color-bg);
+    outline-offset: 3px;
+  }
+  @media (max-width: 520px) {
+    .hero-dots {
+      display: none;
+    }
+    /* Two rows instead of three: on a phone the height is the scarce part. */
+    .hero-facts {
+      gap: 6px;
+    }
+    .hero-facts li {
+      gap: 5px;
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+  }
+  /* A small phone, or any phone held sideways: the facts go before the
+     catalogue gets pushed out of sight. */
+  @media (max-height: 600px) {
+    .hero-facts {
+      display: none;
+    }
+  }
+
+  .catalogue {
+    scroll-margin-top: calc(var(--header-h) + var(--space-4));
+  }
+  /* Focus lands here only to carry the keyboard along with the scroll. */
+  .catalogue:focus {
+    outline: none;
+  }
+
+  /* ---------- decor ---------- */
   .blob {
     position: absolute;
     border-radius: var(--radius-pill);
@@ -805,14 +1012,6 @@
     opacity: 0.35;
     top: -110px;
     right: -60px;
-  }
-  .blob-2 {
-    width: 160px;
-    height: 160px;
-    background: var(--color-bg);
-    opacity: 0.12;
-    bottom: -70px;
-    right: 140px;
   }
   .detail-blob {
     position: absolute;
@@ -895,21 +1094,141 @@
   }
 
   .product-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--space-2);
     width: 100%;
     height: 100%;
     color: var(--color-text);
+    /* The press below is the touch feedback; the grey flash would cover it. */
+    -webkit-tap-highlight-color: transparent;
     transition:
-      transform var(--dur-2) var(--ease-organic),
-      box-shadow var(--dur-2) var(--ease-organic);
+      transform var(--dur-3) var(--ease-organic),
+      box-shadow var(--dur-3) var(--ease-organic);
   }
   .product-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-honey);
     color: var(--color-text);
     text-decoration: none;
+  }
+
+  /* The hover is about the product, not the frame: the washed photo takes
+     its full colour back and leans in. DEVIATION: the zoom runs past
+     --dur-4; a 5% scale in half a second reads as a jolt, not a lean. */
+  .product-card .photo-frame img {
+    transition:
+      filter var(--dur-4) var(--ease-organic),
+      transform 900ms var(--ease-organic);
+  }
+  .product-card:hover .washed img,
+  .product-card:focus-visible .washed img {
+    filter: none;
+    transform: scale(1.05);
+  }
+
+  /* Says where the click leads. Shown on hover where there is one. */
+  .card-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    color: var(--color-accent-700);
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateX(-6px);
+    transition:
+      opacity var(--dur-2) var(--ease-organic),
+      transform var(--dur-3) var(--ease-organic);
+  }
+  .product-card:hover .card-more,
+  .product-card:focus-visible .card-more {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Touch has no hover to bring the photos to life or reveal the hint, so
+     both start that way, and a press answers the finger instead. */
+  @media (hover: none) {
+    .product-card .washed img {
+      filter: none;
+    }
+    .card-more {
+      opacity: 1;
+      transform: none;
+    }
+    .product-card:active {
+      transform: scale(0.98);
+    }
+  }
+
+  /* Two rings on the card's edge, each a gradient masked down to a thin
+     strip: ::before is a still golden rim while the card is hovered,
+     ::after the glint that sweeps once when the visitor arrives from the
+     hero. */
+  .product-card::before,
+  .product-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    padding: 2px;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box exclude,
+      linear-gradient(#000 0 0);
+  }
+  /* Only the deeper amber steps: the pale ones vanish against the card's
+     own beige. */
+  .product-card::before {
+    padding: 1.5px;
+    background: linear-gradient(
+      140deg,
+      var(--color-accent-400),
+      var(--color-accent-600) 50%,
+      var(--color-accent-400)
+    );
+    transition: opacity var(--dur-3) var(--ease-organic);
+  }
+  .product-card:hover::before,
+  .product-card:focus-visible::before {
+    opacity: 1;
+  }
+  /* The surface is pale, so a white glint alone would vanish; the amber on
+     either side is what makes it read as light on metal. */
+  .product-card::after {
+    padding: 3px;
+    background: conic-gradient(
+      from var(--card-glint),
+      transparent 0 55%,
+      color-mix(in srgb, var(--color-accent-400) 45%, transparent) 75%,
+      var(--color-accent-500) 88%,
+      #fff 93%,
+      var(--color-accent-400) 96%,
+      transparent
+    );
+  }
+
+  /* data-greeting is set by the hero's button as its scroll begins: the
+     cards rise while the page glides down to them and settle about when it
+     stops. They go in a wave, capped so a long catalogue does not keep the
+     last visible ones waiting. DEVIATION: both run past --dur-4. The hop
+     has to outlast the glide it rides on, or it peaks while the cards are
+     still below the fold; one lap of the glint in half a second is too
+     quick to see. */
+  .catalogue[data-greeting] .product-card {
+    --card-delay: calc(min(var(--i, 0), 8) * 70ms);
+    animation: card-hop 0.9s var(--ease-organic) var(--card-delay);
+  }
+  .catalogue[data-greeting] .product-card::after {
+    animation: card-glint 1.1s ease-in-out var(--card-delay);
   }
 
   /* Photos are not in the API yet: the frame renders a warm placeholder and
@@ -1108,6 +1427,56 @@
   }
 }
 
+/* Registered so the angle interpolates; an unregistered custom property
+   would flip from start to end in one step. */
+@property --card-glint {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes card-glint {
+  0% {
+    opacity: 0;
+    --card-glint: 0deg;
+  }
+  15%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    --card-glint: 360deg;
+  }
+}
+
+/* No fill-mode on purpose: holding the last frame would pin the transform
+   and the card would stop rising on hover. */
+@keyframes card-hop {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-honey);
+  }
+  72% {
+    transform: translateY(1px);
+  }
+}
+
+@keyframes hero-nudge {
+  0%,
+  55%,
+  100% {
+    transform: none;
+  }
+  28% {
+    transform: translateY(3px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -1118,6 +1487,9 @@
   }
   .back-btn:hover svg,
   .product-card:hover,
+  .product-card:active,
+  .product-card:hover .washed img,
+  .product-card:focus-visible .washed img,
   .nav-brand:hover .brand-badge {
     transform: none;
   }
